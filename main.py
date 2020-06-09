@@ -81,7 +81,7 @@ class Token(NamedTuple):
     cconj: bool
     sconj: List[dict]
     xpos: str
-    feats: str
+    feats: dict
     pron: dict
 
 
@@ -93,9 +93,14 @@ def merge_consecutive(tokens: List[Tuple[Conllu, List[Conllu]]]):
             continue
         if not collect:
             yield t_subs
+            collect = []
             continue
         collect.append(t_subs)
-        main, subs = next(t_subs for t_subs in collect if t_subs[0].xpos != 'PUNCT')
+        non_puncts = [t_subs for t_subs in collect if t_subs[0].xpos != 'PUNCT']
+        if non_puncts:
+            main, subs = non_puncts[0]
+        else:
+            main, subs = collect[0]
         yield (main._replace(form=''.join(t_subs[0].form for t_subs in collect)), subs)
         collect = []
 
@@ -109,7 +114,7 @@ def merge(id, t: Conllu, subs: List[Conllu]):
         [main] = [s for s in subs if s.xpos in ['NOUN', 'VERB', 'ADJ', 'PROPN']] or [None]
         adp = [s.lemma for s in subs if s.xpos == 'ADP']
         xpos = main.xpos if main else None
-        feats = main.feats if main else {}
+        feats = main.feats if main else '_'
     else:
         det = False
         adp = []
@@ -126,7 +131,7 @@ def merge(id, t: Conllu, subs: List[Conllu]):
         cconj=cconj,
         sconj=sconj,
         xpos=xpos,
-        feats=feats,
+        feats=feats if feats != '_' else {},
         pron=pron
     )
 
@@ -146,19 +151,20 @@ def parse_file(filename, parser):
     with open(filename, encoding='utf-8') as f:
         data = f.read().split('# sent_id')[1:]
     for sentence in data:
-        tokens = [merge(id, t, subs) for id, (t, subs) in enumerate(merge_consecutive(group_tokens(parse_conll_sentence(sentence, parser))))]
-        for token in tokens:
-            print(token)
-        print(' '.join(t.form for t in tokens))
-        print(sentence.split('\n')[1][9:])
+        tokens = merge_consecutive(group_tokens(parse_conll_sentence(sentence, parser)))
+        yield [merge(id, t, subs) for id, (t, subs) in enumerate(tokens)]
 
 
-# print_groups(govil_tokens)
-# print()
-# print_groups(openlp_tokens)
+files = [
+    ('mini_openlp.txt', parse_opnlp),
+    ('mini_govil.txt', parse_govil),
+    ('rootem-data/govil.txt', parse_govil),
+    ('../Hebrew_UD/he_htb-ud-dev.conllu', parse_opnlp),
+]
 
-parse_file('mini_openlp.txt', parse_opnlp)
-
-parse_file('mini_govil.txt', parse_govil)
-
-parse_file('rootem-data/govil.txt', parse_govil)
+for sentence in parse_file(*files[3]):
+    for token in sentence:
+        binyan = token.feats.get('HebBinyan', '_')
+        verb = token.xpos if binyan != '_' else '_'
+        print(token.form, verb, binyan, sep='\t')
+    print()

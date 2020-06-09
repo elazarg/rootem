@@ -31,8 +31,7 @@ ID (word index)	FORM	LEMMA	U-POS	X-POS	FEATS	LEMMA ACADEMY	HEB TIKNIYYUT
 10	ו	ו	CCONJ	CCONJ	_	_	_
 11	חידוש	חידוש	NOUN	NOUN	Gender=Masc|Number=Sing|Definite=Def	חִדּוּשׁ	_
 12	_של_	של	ADP	ADP	Case=Gen	_	_
-13	_הוא	הוא	PRON	PRON	Gender=Masc|Number=Sing|Person=3
-	_	_
+13	_הוא	הוא	PRON	PRON	Gender=Masc|Number=Sing|Person=3	_	_
 14	.	.	PUNCT	PUNCT	_	_	_
 
 # sent_id = 1.3
