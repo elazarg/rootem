@@ -1,0 +1,3 @@
+[submodule "rootem-data"]
+	path = rootem-data
+	url = git@github.com:elazarg/rootem-data.git
