@@ -35,7 +35,8 @@ def expand_feats(token):
     token += ['_'] * (8 - len(token))
     if token[5] != '_':
         token[5] = dict(feat.split('=')
-                        for feat in token[5].split('|'))
+                        for feat in token[5].split('|')
+                        if feat)
     return token
 
 
@@ -78,7 +79,7 @@ class Token(NamedTuple):
     det: bool
     adp: List[str]  # ל, מ, ב, כ
     cconj: bool
-    sconj: bool
+    sconj: List[dict]
     xpos: str
     feats: str
     pron: dict
@@ -103,7 +104,7 @@ def merge(id, t: Conllu, subs: List[Conllu]):
     if subs:
         det = any(s.xpos == 'DET' for s in subs)
         cconj = any(s.xpos == 'CCONJ' for s in subs)
-        [sconj] = [s.feats for s in subs if s.xpos == 'SCONJ'] or [{}]
+        sconj = [s.feats for s in subs if s.xpos == 'SCONJ'] or [{}]
         [pron] = [s.feats for s in subs if s.xpos == 'PRON'] or [{}]
         [main] = [s for s in subs if s.xpos in ['NOUN', 'VERB', 'ADJ', 'PROPN']] or [None]
         adp = [s.lemma for s in subs if s.xpos == 'ADP']
@@ -113,7 +114,7 @@ def merge(id, t: Conllu, subs: List[Conllu]):
         det = False
         adp = []
         cconj = False
-        sconj = False
+        sconj = []
         xpos = t.xpos
         feats = t.feats
         pron = {}
@@ -159,3 +160,5 @@ def parse_file(filename, parser):
 parse_file('mini_openlp.txt', parse_opnlp)
 
 parse_file('mini_govil.txt', parse_govil)
+
+parse_file('rootem-data/govil.txt', parse_govil)
