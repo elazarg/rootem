@@ -1,0 +1,138 @@
+ID (word index)	FORM	LEMMA	U-POS	X-POS	FEATS	LEMMA ACADEMY	HEB TIKNIYYUT
+# sent_id = 1.1
+# text = שירות זה מספק מידע לגבי תהליך הנפקת דרכון וחידוש דרכון. 
+1	שירות	שירות	NOUN	NOUN	Gender=Masc|Number=Sing	שֵׁרוּת	_
+2	זה	זה	DET	DET	Gender=Masc|Number=Sing|PronType=Dem	זֶה	_
+3	מספק	סיפק	VERB	VERB	Gender=Masc|Number=Sing|Person=1,2,3|HebBinyan=PIEL|Voice=Act|VerbForm=Part	מְסַפֵּק	_
+4	מידע	מידע	NOUN	NOUN	Gender=Masc|Number=Sing	מֵידָע	_
+5	לגבי	לגבי	ADP	ADP	_	לְגַבֵּי	_
+6	תהליך	תהליך	NOUN	NOUN	Gender=Masc|Number=Sing|Definite=Cons	תַּהֲלִיךְ	_
+7	הנפקת	הנפקה	NOUN	NOUN	Gender=Fem|Number=Sing|Definite=Cons	הַנְפָּקָה	_
+8	דרכון	דרכון	NOUN	NOUN	Gender=Masc|Number=Sing	דַּרְכּוֹן	_
+9-10	וחידוש	_	_	_	_	_	_
+9	ו	ו	CCONJ	CCONJ	_	_	_
+10	חידוש	חידוש	NOUN	NOUN	Gender=Masc|Number=Sing|Definite=Cons	חִדּוּשׁ	_
+11	דרכון	דרכון	NOUN	NOUN	Gender=Masc|Number=Sing	דַּרְכּוֹן	_
+12	.	.	PUNCT	PUNCT	_	_	_
+
+# sent_id = 1.2
+# text = כאן גם תוכלו לשלם עבור שירותי הנפקת הדרכון וחידושו. 
+1	כאן	כאן	ADV	ADV	_	כָּאן	_
+2	גם	גם	CCONJ	CCONJ	_	גַּם	_
+3	תוכלו	יכול	AUX	AUX	Gender=Masc|Number=Plur|Person=2|HebBinyan=PAAL|Voice=Act|VerbType=Mod|Tense=Fut	יָכוֹל	_
+4	לשלם	שילם	VERB	VERB	HebBinyan=PIEL|Voice=Act|VerbForm=Inf	מְשַׁלֵּם	_
+5	עבור	עבור	ADP	ADP	_	עֲבוּר	_
+6	שירותי	שירות	NOUN	NOUN	Gender=Masc|Number=Plur|Definite=Cons	שֵׁרוּת	_
+7	הנפקת	הנפקה	NOUN	NOUN	Gender=Fem|Number=Sing|Definite=Cons	הַנְפָּקָה	_
+8-9	הדרכון	_	_	_	_	_	_
+8	ה	ה	DET	DET	PronType=Art	_	_
+9	דרכון	דרכון	NOUN	NOUN	Gender=Masc|Number=Sing	דַּרְכּוֹן	_
+10-13	וחידושו	_	_	_	_	_	_
+10	ו	ו	CCONJ	CCONJ	_	_	_
+11	חידוש	חידוש	NOUN	NOUN	Gender=Masc|Number=Sing|Definite=Def	חִדּוּשׁ	_
+12	_של_	של	ADP	ADP	Case=Gen	_	_
+13	_הוא	הוא	PRON	PRON	Gender=Masc|Number=Sing|Person=3
+	_	_
+14	.	.	PUNCT	PUNCT	_	_	_
+
+# sent_id = 1.3
+# text = חובה להציג תעודת זהות בקבלת השירות בלשכה. 
+1	חובה	חובה	AUX	AUX	Gender=Fem|Number=Sing|VerbType=Mod	חוֹבָה	_
+2	להציג	הציג	VERB	VERB	HebBinyan=HIFIL|Voice=Act|VerbForm=Inf	מַצִּיג	_
+3	תעודת	תעודה	NOUN	NOUN	Gender=Fem|Number=Sing|Definite=Cons	תְּעוּדָה	_
+4	זהות	זהות	NOUN	NOUN	Gender=Fem|Number=Sing	זֶהוּת	_
+5-6	בקבלת	_	_	_	_	_	_
+5	ב	ב	ADP	ADP	_	_	_
+6	קבלת	קבלה	NOUN	NOUN	Gender=Fem|Number=Sing|Definite=Cons	קַבָּלָה	_
+7-8	השירות	_	_	_	_	_	_
+7	ה	ה	DET	DET	PronType=Art	_	_
+8	שירות	שירות	NOUN	NOUN	Gender=Masc|Number=Sing	שֵׁרוּת	_
+9-11	בלשכה	_	_	_	_	_	_
+9	ב	ב	ADP	ADP	_	_	_
+10	_ה_	ה	DET	DET	PronType=Art	_	_
+11	לשכה	לשכה	NOUN	NOUN	Gender=Fem|Number=Sing	לִשְׁכָּה	_
+12	.	.	PUNCT	PUNCT	_	_	_
+
+# sent_id = 1.4
+# text = חובה להציג תעודת זהות בקבלת השירות בלשכה. 
+1	חובה	חובה	AUX	AUX	Gender=Fem|Number=Sing|VerbType=Mod	חוֹבָה	_
+2	להציג	הציג	VERB	VERB	HebBinyan=HIFIL|Voice=Act|VerbForm=Inf	מַצִּיג	_
+3	תעודת	תעודה	NOUN	NOUN	Gender=Fem|Number=Sing|Definite=Cons	תְּעוּדָה	_
+4	זהות	זהות	NOUN	NOUN	Gender=Fem|Number=Sing	זֶהוּת	_
+5-6	בקבלת	_	_	_	_	_	_
+5	ב	ב	ADP	ADP	_	_	_
+6	קבלת	קבלה	NOUN	NOUN	Gender=Fem|Number=Sing|Definite=Cons	קַבָּלָה	_
+7-8	השירות	_	_	_	_	_	_
+7	ה	ה	DET	DET	PronType=Art	_	_
+8	שירות	שירות	NOUN	NOUN	Gender=Masc|Number=Sing	שֵׁרוּת	_
+9-11	בלשכה	_	_	_	_	_	_
+9	ב	ב	ADP	ADP	_	_	_
+10	_ה_	ה	DET	DET	PronType=Art	_	_
+11	לשכה	לשכה	NOUN	NOUN	Gender=Fem|Number=Sing	לִשְׁכָּה	_
+12	.	.	PUNCT	PUNCT	_	_	_
+
+# sent_id = 2.1
+# text = תנאים לקיום הבחינה. 
+1	תנאים	תנאי	NOUN	NOUN	Gender=Masc|Number=Plur	תְּנַאי	_
+2-3	לקיום	_	_	_	_	_	_
+2	ל	ל	ADP	ADP	_	_	_
+3	קיום	קיום	NOUN	NOUN	Gender=Masc|Number=Sing|Definite=Cons	קִיּוּם	_
+4-5	הבחינה	_	_	_	_	_	_
+4	ה	ה	DET	DET	PronType=Art	_	_
+5	בחינה	בחינה	NOUN	NOUN	Gender=Fem|Number=Sing	בְּחִינָה	_
+6	.	.	PUNCT	PUNCT	_	_	_
+
+# sent_id = 2.2
+# text = יש להחתים את הרש"ל 18 באופן אישי במשרד הרישוי טרם ביצוע מבחן עיוני (תיאוריה). 
+1	יש	יש	AUX	AUX	VerbType=Mod	יֵשׁ	_
+2	להחתים	החתים	VERB	VERB	HebBinyan=HIFIL|Voice=Act|VerbForm=Inf	מַחְתִּים	_
+3	את	את	ADP	ADP	Case=Acc	אֶת	_
+4-5	הרש"ל	_	_	_	_	_	_
+4	ה	ה	DET	DET	PronType=Art	_	_
+5	רש"ל	רש"ל	NOUN	NOUN	Gender=Masc|Number=Sing|Abbr=Yes	רש"ל	_
+6	18	18	NUM	NUM	NumType=Card	18	_
+7-8	באופן	_	_	_	_	_	_
+7	ב	ב	ADP	ADP	_	_	_
+8	אופן	אופן	NOUN	NOUN	Gender=Masc|Number=Sing	אֹפֶן	_
+9	אישי	אישי	ADJ	ADJ	Gender=Masc|Number=Sing	אִישִׁי	_
+10-11	במשרד	_	_	_	_	_	_
+10	ב	ב	ADP	ADP	_	_	_
+11	משרד	משרד	NOUN	NOUN	Gender=Masc|Number=Sing|Definite=Cons	מִשְׂרָד	_
+12-13	הרישוי	_	_	_	_	_	_
+12	ה	ה	DET	DET	PronType=Art	_	_
+13	רישוי	רישוי	NOUN	NOUN	Gender=Masc|Number=Sing	רִשּׁוּי	_
+14	טרם	טרם	ADV	ADV	_	טֶרֶם	_
+15	ביצוע	ביצוע	NOUN	NOUN	Gender=Masc|Number=Sing|Definite=Cons	בִּצּוּעַ	_
+16	מבחן	מבחן	NOUN	NOUN	Gender=Masc|Number=Sing	מִבְחָן	_
+17	עיוני	עיוני	ADJ	ADJ	Gender=Masc|Number=Sing	עִיּוּנִי	_
+18	(	(	PUNCT	PUNCT	_	_	_
+19	תיאוריה	תאוריה	NOUN	NOUN	Gender=Fem|Number=Sing	תֵּאוֹרְיָה	_
+20	)	)	PUNCT	PUNCT	_	_	_
+21	.	.	PUNCT	PUNCT	_	_	_
+
+# sent_id = 2.3
+# text = יש להירשם למבחן העיוני מראש. במהלך הרישום, תתבקשו לשלם עבור אגרת מבחן. 
+1	יש	יש	AUX	AUX	VerbType=Mod	יֵשׁ	_
+2	להירשם	נרשם	VERB	VERB	HebBinyan=NIFAL|Voice=Mid|VerbForm=Inf	נִרְשָׁם	_
+3-5	למבחן	_	_	_	_	_	_
+3	ל	ל	ADP	ADP	_	_	_
+4	_ה_	ה	DET	DET	PronType=Art	_	_
+5	מבחן	מבחן	NOUN	NOUN	Gender=Masc|Number=Sing	מִבְחָן	_
+6-7	העיוני	_	_	_	_	_	_
+6	ה	ה	DET	DET	PronType=Art	_	_
+7	עיוני	עיוני	ADJ	ADJ	Gender=Masc|Number=Sing	עִיּוּנִי	_
+8	מראש	מראש	ADV	ADV	_	מֵרֹאשׁ	_
+9	.	.	PUNCT	PUNCT	_	_	_
+10-11	במהלך	_	_	_	_	_	_
+10	ב	ב	ADP	ADP	_	_	_
+11	מהלך	מהלך	NOUN	NOUN	Gender=Masc|Number=Sing|Definite=Cons	מַהֲלָךְ	_
+12-13	הרישום	_	_	_	_	_	_
+12	ה	ה	DET	DET	PronType=Art	_	_
+13	רישום	רישום	NOUN	NOUN	Gender=Masc|Number=Sing	רִשּׁוּם	_
+14	,	,	PUNCT	PUNCT	_	_	_
+15	תתבקשו	התבקש	VERB	VERB	Gender=Masc|Number=Plur|Person=2|HebBinyan=HITPAEL|Tense=Fut	מִתְבַּקֵּשׁ	_
+16	לשלם	שילם	VERB	VERB	HebBinyan=PIEL|Voice=Act|VerbForm=Inf	מְשַׁלֵּם	_
+17	עבור	עבור	ADP	ADP	_	עֲבוּר	_
+18	אגרת	אגרה	NOUN	NOUN	Gender=Fem|Number=Sing|Definite=Cons	אַגְרָה	_
+19	מבחן	מבחן	NOUN	NOUN	Gender=Masc|Number=Sing	מִבְחָן	_
+20	.	.	PUNCT	PUNCT	_	_	_
