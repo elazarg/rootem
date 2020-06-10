@@ -9,16 +9,13 @@ p {
 	min-height: 3em;
 	margin-right: 15%;
     margin-left: 15%;
-	font-size: large;
+	font-size: medium;
 }
 
 table {
 	width: 750px;
 	border-collapse: collapse;
-	margin-top:5px auto;
-	margin-left:50px auto;
-	margin-right:50px auto;
-	margin-bottom:10px auto;
+	margin: 10px auto;
 }
 
 /* Zebra striping */
@@ -35,7 +32,7 @@ th {
 
 option, select, input {
     font-family: "Alef Hebrew", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	font-size: 16px;
+	font-size: 18px;
 	text-align: center;
 }
 
@@ -43,7 +40,7 @@ td, th {
 	direction: rtl;
 	padding: 3px;
 	border: 1px solid #ccc;
-	font-size: 16px;
+	font-size: 18px;
 	}
 td {
 	text-align: center;
