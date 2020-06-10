@@ -6,6 +6,7 @@
     <body dir="rtl">
         <h1>תיוג שורשים ובניינים</h1>
         <p><a href="{{ sent_id }}">{{ sent_id }}</a>: {{ text }}</p>
+        <form method="POST" action="/upload" >
         <table>
           <thead>
             <tr>
@@ -17,31 +18,32 @@
             </tr>
           </thead>
           <tbody>
-        {% for id, word, pos, _ in lines %}
+          {% for id, word, pos, _ in lines %}
             <tr>
-                <td>{{ id }}</td>
-                <td>{{ word }}</td>
-                <td>{{ translate(pos) }} </td>
-                <td>
+                <td>{{ id }} <input type="hidden" name="{{ id }}"> </td>
+                <td>{{ word }} <input type="hidden" name="{{ id }}_word" value="{{ word }}">  </td>
+                <td>{{ translate(pos) }} <input type="hidden" name="{{ id }}_pos" value="{{ pos }}"> </td>
                 {% if pos == 'VERB' %}
-                    <select name="verb" id="verb_{{id}}" required="true">
-                        <option></option>
-                        {% for binyan, heb_binyan in binyanim.items() %}
-                        <option value="{{ binyan }}">{{ heb_binyan }}</option>
-                        {% endfor %}
-                    </select>
-                    {% endif %}
-                </td>
-                <td>
-                {% if pos == 'VERB' %}
-                    <label>
-                        <input type="text" size="4" maxlength="4"/>
-                    </label>
-                    {% endif %}
-                </td>
-            </tr>
-        {% endfor %}
+                    <td>
+                        <select name="{{ id }}_verb" required="true">
+                            <option></option>
+                            {% for binyan, heb_binyan in binyanim.items() %}
+                            <option value="{{ binyan }}">{{ heb_binyan }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <input name="{{ id }}_root" type="text" size="4" maxlength="4"/>
+                    </td>
+                {% else %}
+                    <td><input name="{{ id }}_verb" type="hidden" value="_"/></td>
+                    <td><input name="{{ id }}_root" type="hidden" value="_"/></td>
+                {% endif %}
+             </tr>
+            {% endfor %}
             </tbody>
         </table>
+            <input type="submit" value="שלח"/>
+        </form>
     </body>
 </html>
