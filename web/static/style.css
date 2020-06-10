@@ -15,9 +15,10 @@ p {
 table {
 	width: 750px;
 	border-collapse: collapse;
-	margin:0px auto;
+	margin-top:5px auto;
 	margin-left:50px auto;
 	margin-right:50px auto;
+	margin-bottom:10px auto;
 }
 
 /* Zebra striping */
@@ -62,7 +63,7 @@ only screen and (max-width: 760px),
 
 	/* Force table to not be like tables anymore */
 	table, thead, tbody, th, td, tr {
-		/* display: block; */
+		display: block;
 	}
 
 	/* Hide table headers (but not display: none;, for accessibility) */
