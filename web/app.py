@@ -26,7 +26,13 @@ def utility_processor():
 
 def preload():
     global_dict = {}
-    for file in ['../rootem-data/verbs_govil.tsv', '../rootem-data/verbs_openlp.tsv']:
+    files = [
+        '../rootem-data/verbs_openlp_dev.tsv',
+        '../rootem-data/verbs_openlp_test.tsv',
+        '../rootem-data/verbs_openlp_train.tsv',
+        # '../rootem-data/verbs_govil.tsv'
+    ]
+    for file in files:
         with open(file, encoding='utf-8') as f:
             sentences = f.read().split('# sent_id = ')[1:]
             for s in sentences:
