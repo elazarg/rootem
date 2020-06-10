@@ -46,7 +46,7 @@ def parse_conll_sentence(sentence: str, parser):
     sent_id = sent_id.split()[-1]
     text = text.split(maxsplit=3)[-1]
     tokens = [parser(expand_feats(token.split('\t'))) for token in tokens]
-    return tokens
+    return sent_id, text, tokens
 
 
 def next_after(id):
@@ -150,21 +150,26 @@ def print_groups(tokens):
 def parse_file(filename, parser):
     with open(filename, encoding='utf-8') as f:
         data = f.read().split('# sent_id')[1:]
-    for sentence in data:
-        tokens = merge_consecutive(group_tokens(parse_conll_sentence(sentence, parser)))
-        yield [merge(id, t, subs) for id, (t, subs) in enumerate(tokens)]
+    for block in data:
+        sentence_id, text, sentence = parse_conll_sentence(block, parser)
+        tokens = merge_consecutive(group_tokens(sentence))
+        yield sentence_id, text, [merge(id, t, subs) for id, (t, subs) in enumerate(tokens)]
 
 
 files = [
     ('mini_openlp.txt', parse_opnlp),
     ('mini_govil.txt', parse_govil),
-    ('rootem-data/govil.txt', parse_govil),
-    ('../Hebrew_UD/he_htb-ud-dev.conllu', parse_opnlp),
+    ('rootem-data/govil.txt', parse_govil, 'rootem-data/verbs_govil.tsv'),
+    ('../Hebrew_UD/he_htb-ud-dev.conllu', parse_opnlp, 'rootem-data/verbs_openlp.tsv'),
 ]
 
-for sentence in parse_file(*files[3]):
-    for token in sentence:
-        binyan = token.feats.get('HebBinyan', '_')
-        verb = token.xpos if binyan != '_' else '_'
-        print(token.form, verb, binyan, sep='\t')
-    print()
+for infilename, parser, outfilename in files[2:]:
+    with open(outfilename, 'w', encoding='utf-8') as outfile:
+        for sentence_id, text, sentence in parse_file(infilename, parser):
+            print('# sent_id =', sentence_id, file=outfile)
+            print('# text =', text, file=outfile)
+            for token in sentence:
+                binyan = token.feats.get('HebBinyan', '_')
+                verb = token.xpos if binyan != '_' else '_'
+                print(token.id, token.form, verb, binyan, sep='\t', file=outfile)
+            print(file=outfile)
