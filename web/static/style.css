@@ -36,10 +36,15 @@ th {
 	outline-color: unset;
 	-webkit-appearance: none;
 }
+.tableInput {
+	text-align: center;
+	width: 80%;
+	text-align-last:center;
+    -moz-text-align-last: center;
+}
 option, select, input {
     font-family: "Alef Hebrew", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	font-size: 18px;
-	text-align: center;
 }
 td, th {
 	direction: rtl;

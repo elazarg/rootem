@@ -23,10 +23,10 @@
           <tbody>
           {% for id, word, pos, _ in lines %}
             <tr>
-                <td>{{ id }} <input type="hidden" name="{{ id }}"/> </td>
-                <td>{{ word }} <input type="hidden" name="{{ id }}_word" value="{{ word }}"/>  </td>
+                <td>{{ id }} <input class="tableInput" type="hidden" name="{{ id }}"/> </td>
+                <td>{{ word }} <input class="tableInput" type="hidden" name="{{ id }}_word" value="{{ word }}"/>  </td>
                 <td>
-                    <select class="known" name="{{ id }}_pos">
+                    <select class="known tableInput" name="{{ id }}_pos">
                         {% if pos == 'VERB' %}
                             <option value="{{ pos }}">{{ translate(pos) }}</option>
                             <option value=""></option>
@@ -34,6 +34,7 @@
                             <option value=""></option>
                             <option value="VERB">{{ translate("VERB") }}</option>
                         {% endif %}
+                            <option value="AUX">{{ translate("AUX") }}</option>
                     </select>
                 </td>
                 {% set required = '' %}
@@ -43,7 +44,7 @@
                 {% set required = 'required' %}
                 {% endif %}
                     <td>
-                        <select class="{{class}}" name="{{ id }}_verb" {{required}}>
+                        <select class="{{class}} tableInput" name="{{ id }}_verb" {{required}}>
                             <option></option>
                             {% for binyan, heb_binyan in binyanim.items() %}
                             <option value="{{ binyan }}">{{ heb_binyan }}</option>
@@ -51,7 +52,7 @@
                         </select>
                     </td>
                     <td>
-                        <input class="{{class}}" name="{{ id }}_root" type="text" size="4" maxlength="4" {{required}}/>
+                        <input class="{{class}} tableInput" name="{{ id }}_root" type="text" size="4" maxlength="4" {{required}}/>
                     </td>
              </tr>
             {% endfor %}
