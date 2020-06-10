@@ -6,15 +6,18 @@ html {
 }
 
 p {
-	margin-right: 20%;
-    margin-left: 20%;
-	font-size: x-large;
+	min-height: 3em;
+	margin-right: 15%;
+    margin-left: 15%;
+	font-size: large;
 }
 
 table {
 	width: 750px;
 	border-collapse: collapse;
-	margin:50px auto;
+	margin:0px auto;
+	margin-left:50px auto;
+	margin-right:50px auto;
 }
 
 /* Zebra striping */
@@ -31,15 +34,15 @@ th {
 
 option, select, input {
     font-family: "Alef Hebrew", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	font-size: 18px;
+	font-size: 16px;
 	text-align: center;
 }
 
 td, th {
 	direction: rtl;
-	padding: 10px;
+	padding: 3px;
 	border: 1px solid #ccc;
-	font-size: 18px;
+	font-size: 16px;
 	}
 td {
 	text-align: center;
@@ -86,7 +89,7 @@ only screen and (max-width: 760px),
 		top: 6px;
 		left: 6px;
 		width: 45%;
-		padding-right: 10px;
+		padding-right: 3px;
 		white-space: nowrap;
 		/* Label the data */
 		content: attr(data-column);
