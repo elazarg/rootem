@@ -1,12 +1,15 @@
-<html>
+<!doctype html>
+<html lang="he">
     <head>
         <title>תיוג שורשים ובניינים</title>
         <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='style.css') }}">
     </head>
     <body dir="rtl">
         <h1>תיוג שורשים ובניינים</h1>
-        <p><a href="{{ sent_id }}">{{ sent_id }}</a>: {{ text }}</p>
+        <p><a href="/{{corpus}}/{{sent_id}}">{{ sent_id }}</a>: {{ text }}</p>
         <form method="POST" action="/upload" >
+            <input type="hidden" name="corpus" value="{{corpus}}"/>
+            <input type="hidden" name="sent_id" value="{{sent_id}}"/>
         <table>
           <thead>
             <tr>
@@ -20,12 +23,17 @@
           <tbody>
           {% for id, word, pos, _ in lines %}
             <tr>
-                <td>{{ id }} <input type="hidden" name="{{ id }}"> </td>
-                <td>{{ word }} <input type="hidden" name="{{ id }}_word" value="{{ word }}">  </td>
-                <td>{{ translate(pos) }} <input type="hidden" name="{{ id }}_pos" value="{{ pos }}"> </td>
+                <td>{{ id }} <input type="hidden" name="{{ id }}"/> </td>
+                <td>{{ word }} <input type="hidden" name="{{ id }}_word" value="{{ word }}"/>  </td>
+                <td>{{ translate(pos) }} <input type="hidden" name="{{ id }}_pos" value="{{ pos }}"/> </td>
+                {% set visibility = 'hidden' %}
+                {% set required = '' %}
                 {% if pos == 'VERB' %}
+                {% set required = 'required' %}
+                {% set visibility = 'visible' %}
+                {% endif %}
                     <td>
-                        <select name="{{ id }}_verb" required="true">
+                        <select name="{{ id }}_verb" {{required}} style="visibility:{{visibility}};">
                             <option></option>
                             {% for binyan, heb_binyan in binyanim.items() %}
                             <option value="{{ binyan }}">{{ heb_binyan }}</option>
@@ -33,16 +41,14 @@
                         </select>
                     </td>
                     <td>
-                        <input name="{{ id }}_root" type="text" size="4" maxlength="4"/>
+                        <input name="{{ id }}_root" type="text" size="4" maxlength="4" {{required}} style="visibility:{{visibility}};" />
                     </td>
-                {% else %}
-                    <td><input name="{{ id }}_verb" type="hidden" value="_"/></td>
-                    <td><input name="{{ id }}_root" type="hidden" value="_"/></td>
-                {% endif %}
              </tr>
             {% endfor %}
             </tbody>
         </table>
+            <label for="email">אימייל</label>
+            <input id="email" name="email" type="email" value="{{ email }}"/>
             <input type="submit" value="שלח"/>
         </form>
     </body>
