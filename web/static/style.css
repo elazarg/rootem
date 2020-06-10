@@ -30,12 +30,17 @@ th {
 	text-align: center;
 }
 
+.known {
+	border: none;
+	background-color: unset;
+	outline-color: unset;
+	-webkit-appearance: none;
+}
 option, select, input {
     font-family: "Alef Hebrew", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	font-size: 18px;
 	text-align: center;
 }
-
 td, th {
 	direction: rtl;
 	padding: 3px;

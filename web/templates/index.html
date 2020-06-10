@@ -25,15 +25,25 @@
             <tr>
                 <td>{{ id }} <input type="hidden" name="{{ id }}"/> </td>
                 <td>{{ word }} <input type="hidden" name="{{ id }}_word" value="{{ word }}"/>  </td>
-                <td>{{ translate(pos) }} <input type="hidden" name="{{ id }}_pos" value="{{ pos }}"/> </td>
-                {% set visibility = 'hidden' %}
+                <td>
+                    <select class="known" name="{{ id }}_pos">
+                        {% if pos == 'VERB' %}
+                            <option value="{{ pos }}">{{ translate(pos) }}</option>
+                            <option value=""></option>
+                        {% else %}
+                            <option value=""></option>
+                            <option value="VERB">{{ translate("VERB") }}</option>
+                        {% endif %}
+                    </select>
+                </td>
                 {% set required = '' %}
+                {% set class = 'known' %}
                 {% if pos == 'VERB' %}
+                {% set class = '' %}
                 {% set required = 'required' %}
-                {% set visibility = 'visible' %}
                 {% endif %}
                     <td>
-                        <select name="{{ id }}_verb" {{required}} style="visibility:{{visibility}};">
+                        <select class="{{class}}" name="{{ id }}_verb" {{required}}>
                             <option></option>
                             {% for binyan, heb_binyan in binyanim.items() %}
                             <option value="{{ binyan }}">{{ heb_binyan }}</option>
@@ -41,7 +51,7 @@
                         </select>
                     </td>
                     <td>
-                        <input name="{{ id }}_root" type="text" size="4" maxlength="4" {{required}} style="visibility:{{visibility}};" />
+                        <input class="{{class}}" name="{{ id }}_root" type="text" size="4" maxlength="4" {{required}}/>
                     </td>
              </tr>
             {% endfor %}
