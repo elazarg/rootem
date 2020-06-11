@@ -31,11 +31,14 @@ class Gizra(Enum):
 
 
 def classify_gizra(root) -> Gizra:
+    if len(root) == 4:
+        return Gizra.MERUBAIM
+
     special = {
         'יצת יצק יצע יצב יצר יצג יזע': Gizra.HAFITZ,
-        'לקח נתנ נגש': Gizra.HAFAN_SPECIAL,
         'אבד אהב אחז אכל אמר אהד': Gizra.NAFA,
         'אבה אפה': Gizra.NAFA_NALYA,
+        'לקח נתנ נגש': Gizra.HAFAN_SPECIAL,
         'ודה ורה ונה': Gizra.NAFYU_NALYA,
         'נטה נכה': Gizra.HAFAN_NALYA,
         'יטב ילל ישר ימנ ינק': Gizra.NAFYU_SPECIAL,
@@ -45,9 +48,6 @@ def classify_gizra(root) -> Gizra:
     for k in special:
         if root in k.split():
             return special[k]
-
-    if len(root) == 4:
-        return Gizra.MERUBAIM
 
     פ, ע, ל = root
     if פ == 'נ':
