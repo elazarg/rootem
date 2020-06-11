@@ -1,67 +1,59 @@
-<!doctype html>
-<html lang="he">
-    <head>
-        <title>תיוג שורשים ובניינים</title>
-        <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='style.css') }}">
-        <link rel="icon" type="image/png" href="{{url_for('static',filename='favicon-32x32.png')}}" sizes="32x32" />
-        <link rel="icon" type="image/png" href="{{url_for('static',filename='favicon-16x16.png')}}" sizes="16x16" />
-    </head>
-    <body dir="rtl">
-        <h1>תיוג שורשים ובניינים</h1>
-        <p><a href="/{{corpus}}/{{sent_id}}">{{ sent_id }}</a>: {{ text }}</p>
-        <form method="POST" action="/upload" >
-            <input type="hidden" name="corpus" value="{{corpus}}"/>
-            <input type="hidden" name="sent_id" value="{{sent_id}}"/>
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>מילה</th>
-              <th>חלק דיבר</th>
-              <th>בניין</th>
-              <th>שורש</th>
-            </tr>
-          </thead>
-          <tbody>
-          {% for id, word, pos, _ in lines %}
-            <tr>
-                <td>{{ id }} <input class="tableInput" type="hidden" name="{{ id }}"/> </td>
-                <td>{{ word }} <input class="tableInput" type="hidden" name="{{ id }}_word" value="{{ word }}"/>  </td>
+{% extends "layout.html" %}
+{% block content %}
+  <h1>תיוג שורשים ובניינים</h1>
+    <p><a href="/{{corpus}}/{{sent_id}}">{{ sent_id }}</a>: {{ text }}</p>
+    <form method="POST" action="/upload" >
+        <input type="hidden" name="corpus" value="{{corpus}}"/>
+        <input type="hidden" name="sent_id" value="{{sent_id}}"/>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>מילה</th>
+          <th>חלק דיבר</th>
+          <th>בניין</th>
+          <th>שורש</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for id, word, pos, _ in lines %}
+        <tr>
+            <td>{{ id }} <input class="tableInput" type="hidden" name="{{ id }}"/> </td>
+            <td>{{ word }} <input class="tableInput" type="hidden" name="{{ id }}_word" value="{{ word }}"/>  </td>
+            <td>
+                <select class="known tableInput" name="{{ id }}_pos">
+                    {% if pos == 'VERB' %}
+                        <option value="{{ pos }}">{{ translate(pos) }}</option>
+                        <option value=""></option>
+                    {% else %}
+                        <option value=""></option>
+                        <option value="VERB">{{ translate("VERB") }}</option>
+                    {% endif %}
+                        <option value="AUX">{{ translate("AUX") }}</option>
+                </select>
+            </td>
+            {% set required = '' %}
+            {% set class = 'known' %}
+            {% if pos == 'VERB' %}
+            {% set class = '' %}
+            {% set required = 'required' %}
+            {% endif %}
                 <td>
-                    <select class="known tableInput" name="{{ id }}_pos">
-                        {% if pos == 'VERB' %}
-                            <option value="{{ pos }}">{{ translate(pos) }}</option>
-                            <option value=""></option>
-                        {% else %}
-                            <option value=""></option>
-                            <option value="VERB">{{ translate("VERB") }}</option>
-                        {% endif %}
-                            <option value="AUX">{{ translate("AUX") }}</option>
+                    <select class="{{class}} tableInput" name="{{ id }}_verb" {{required}}>
+                        <option></option>
+                        {% for binyan, heb_binyan in binyanim.items() %}
+                        <option value="{{ binyan }}">{{ heb_binyan }}</option>
+                        {% endfor %}
                     </select>
                 </td>
-                {% set required = '' %}
-                {% set class = 'known' %}
-                {% if pos == 'VERB' %}
-                {% set class = '' %}
-                {% set required = 'required' %}
-                {% endif %}
-                    <td>
-                        <select class="{{class}} tableInput" name="{{ id }}_verb" {{required}}>
-                            <option></option>
-                            {% for binyan, heb_binyan in binyanim.items() %}
-                            <option value="{{ binyan }}">{{ heb_binyan }}</option>
-                            {% endfor %}
-                        </select>
-                    </td>
-                    <td>
-                        <input class="{{class}} tableInput" name="{{ id }}_root" type="text" size="4" maxlength="4" {{required}}/>
-                    </td>
-             </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-            <input type="submit" value="שלח כמשתמש"/>
-            <input id="email" name="email" type="email" value="{{ email }}"/>
-        </form>
-    </body>
-</html>
+                <td>
+                    <input class="{{class}} tableInput" name="{{ id }}_root" type="text" size="4" maxlength="4" {{required}}/>
+                </td>
+         </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+        <input type="submit" value="שלח כמשתמש"/>
+        <input id="email" name="email" type="email" value="{{ email }}"/>
+    </form>
+{% endblock %}

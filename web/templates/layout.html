@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="he">
+    <head>
+        <meta charset="UTF-8">
+        {% block head %}
+        <title>תיוג שורשים ובניינים</title>
+        <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='style.css') }}">
+        {% endblock %}
+        <link rel="icon" type="image/png" href="{{url_for('static',filename='favicon-32x32.png')}}" sizes="32x32" />
+        <link rel="icon" type="image/png" href="{{url_for('static',filename='favicon-16x16.png')}}" sizes="16x16" />
+    </head>
+<body dir="rtl">
+    <div id="content">{% block content %}{% endblock %}</div>
+
+    <div id="footer">נוצר על ידי <a href="https://www.linkedin.com/in/elazar-gershuni/">אלעזר גרשוני</a></div>
+</body>
+</html>

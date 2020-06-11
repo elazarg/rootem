@@ -4,7 +4,12 @@ html {
     font-family: "Alef Hebrew", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	text-align: center;
 }
-
+#content {
+	min-height: calc(100vh - 60px);
+}
+.bigRoot {
+	font-size: xx-large;
+}
 p {
 	min-height: 3em;
 	margin-right: 15%;
@@ -41,6 +46,10 @@ th {
 	width: 80%;
 	text-align-last:center;
     -moz-text-align-last: center;
+}
+#footer {
+	font-size: small;
+	margin-top: 10px;
 }
 option, select, input {
     font-family: "Alef Hebrew", "Helvetica Neue", Helvetica, Arial, sans-serif;

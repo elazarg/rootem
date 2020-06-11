@@ -75,3 +75,34 @@ def specific_sentence(corpus, sent_id):
     email = request.cookies.get('email', 'nobody@nowhere.com')
     text, lines = global_dict[(corpus, sent_id)]
     return render_template('index.html', corpus=corpus, sent_id=sent_id, text=text, lines=lines, email=email)
+
+
+shuffled = '../rootem-data/potential_roots_shuffled.txt'
+with open(shuffled, encoding='utf8') as f:
+    all_roots = f.read().split()
+
+
+roots_true = open('../rootem-data/roots_true.txt', 'r+', encoding='utf8')
+roots_false = open('../rootem-data/roots_false.txt', 'r+', encoding='utf8')
+
+root_index = 0
+root_index += len(roots_true.readlines())
+root_index += len(roots_false.readlines())
+
+
+@app.route('/root/upload', methods=['POST'])
+def upload_root():
+    global root_index
+    (_, root), (is_root, _) = request.form.items()
+    print(root, is_root)
+    if all_roots[root_index] == root:
+        root_index += 1
+    print(root, file=roots_true if int(is_root) else roots_false, flush=True)
+
+    return redirect('/root/isit')
+
+
+@app.route('/root/isit', methods=['GET'])
+def is_it_root():
+    root = all_roots[root_index]
+    return render_template('isitroot.html', action="/root/upload", root=root)
