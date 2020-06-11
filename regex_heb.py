@@ -1,18 +1,69 @@
 from enum import Enum, auto
 
 
-def pitz(root):
-    if root.startswith('יצ'):
-        return root[-1] in 'בקעתגר'
-    return root == 'יזע'  # ?
+class Gizra(Enum):
+    SHLEMIM = auto()
+    MERUBAIM = auto()
+
+    FG = auto()
+    AG = auto()
+    LG = auto()
+
+    HAFITZ = auto()
+    HAFAN = auto()
+
+    NAFA = auto()
+    NAFYU = auto()
+    NALA = auto()
+    NALYAH = auto()
+
+    NAU = auto()
+    KFULIM = auto()
+
+    HAFAN_NALYA = auto()
+    NAFA_NALYA = auto()
+    NAFYU_NALYA = auto()
+
+    HAFAN_SPECIAL = auto()
+    NAFYU_SPECIAL = auto()
+    NALA_SPECIAL = auto()
+    NAU_SPECIAL = auto()
 
 
-def nfyu(root):
-    return root.startswith('י') and not pitz(root)
+def classify_gizra(root) -> Gizra:
+    if len(root) == 4:
+        return Gizra.MERUBAIM
 
+    special = {
+        'יצת יצק יצע יצב יצר יצג יזע': Gizra.HAFITZ,
+        'אבד אהב אחז אכל אמר אהד': Gizra.NAFA,
+        'אבה אפה': Gizra.NAFA_NALYA,
+        'לקח נתנ נגש': Gizra.HAFAN_SPECIAL,
+        'ודה ורה ונה': Gizra.NAFYU_NALYA,
+        'נטה נכה': Gizra.HAFAN_NALYA,
+        'יטב ילל ישר ימנ ינק': Gizra.NAFYU_SPECIAL,
+        'מצא חבא סמא נשא קרא': Gizra.NALA_SPECIAL,
+        'כונ קומ': Gizra.NALA_SPECIAL,
+    }
+    for k in special:
+        if root in k.split():
+            return special[k]
 
-def hfn(root):
-    return root[0] == 'נ'
+    פ, ע, ל = root
+    if פ == 'נ':
+        return Gizra.HAFAN
+    elif פ == 'י':
+        return Gizra.NAFYU
+    elif ל in 'יה':
+        return Gizra.NALYAH
+    elif ל == 'א':
+        return Gizra.NALA
+    elif ע in 'וי':
+        return Gizra.NAU
+    elif ע == ל:
+        return Gizra.KFULIM
+    else:
+        return Gizra.SHLEMIM
 
 
 class Binyan(Enum):
