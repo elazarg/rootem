@@ -14,7 +14,7 @@ def normalize_sofiot(s):
 def make_sofiot(word):
     for k, v in zip('כמנפצ', 'ךםןףץ'):
         if word.endswith(k):
-            return word[:-1] + v
+            return word.strip()[:-1] + v
     return word
 
 
@@ -44,7 +44,7 @@ def enumerate_possible_forms(verb):
                     if binyan in ['פעל', 'פיעל', 'הפעיל']:
                         suffixes = ['', 'ו', 'מ', 'נ', 'ה', 'כ', 'נו', 'ני', 'הו', 'תנ', 'תם', 'יהו']
                     for suffix in suffixes:
-                        t_instance = stripped_instance(instance[:-1]) if suffix else instance
+                        t_instance = stripped_instance(instance) if suffix else instance
                         if conj + prefix + t_instance + suffix == verb:
                             if suffix:
                                 suffix = make_sofiot(suffix)
@@ -56,5 +56,5 @@ def enumerate_possible_forms(verb):
 HEADER = ('שורש', "ו", "שימוש", "מילה", "סיומת", "בניין", "זמן", "גוף", "מין", "מספר")
 
 if __name__ == '__main__':
-    for x in enumerate_possible_forms('כשכוונתם'):
+    for x in enumerate_possible_forms('התאפיין'):
         print(x)
