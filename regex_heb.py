@@ -15,6 +15,7 @@ def make_sofiot(word):
     for k, v in zip('כמנפצ', 'ךםןףץ'):
         if word.endswith(k):
             return word[:-1] + v
+    return word
 
 
 def stripped_instance(instance):
@@ -48,12 +49,12 @@ def enumerate_possible_forms(verb):
                             if suffix:
                                 suffix = make_sofiot(suffix)
                             else:
-                                body = make_sofiot(body)
+                                instance = make_sofiot(instance)
                             yield (root, conj, prefix, instance, suffix, binyan, tense, body, sex, plurality)
 
 
 HEADER = ('שורש', "ו", "שימוש", "מילה", "סיומת", "בניין", "זמן", "גוף", "מין", "מספר")
 
 if __name__ == '__main__':
-    for x in enumerate_possible_forms('כשכוונו'):
+    for x in enumerate_possible_forms('כשכוונתם'):
         print(x)
