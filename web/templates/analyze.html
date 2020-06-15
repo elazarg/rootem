@@ -1,9 +1,10 @@
 {% extends "layout.html" %}
 {% block content %}
-    <form method="GET" action="{{ action }}" >
-        <label for="word_input">פועל לניתוח</label>
-        <input id="word_input" name="verb" value="{{ verb }}"/>
-        <input type="submit" value="נתח"/>
+    <form class="analyze" method="GET" action="{{ action }}" >
+        <label for="word_input">ניתוח פעלים</label>
+        <br>
+        <input class="analyze" id="word_input" name="verb" value="{{ verb }}"/>
+        <input class="analyze" type="submit" value="נתח"/>
     </form>
     <div>
     <table>

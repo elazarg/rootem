@@ -10,6 +10,13 @@ html {
 .bigRoot {
 	font-size: xx-large;
 }
+form.analyze {
+	margin-top: 50px;
+}
+.analyze {
+	text-align: center;
+	font-size: xx-large;
+}
 p {
 	min-height: 3em;
 	margin-right: 15%;
