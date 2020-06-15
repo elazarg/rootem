@@ -11,6 +11,12 @@ def normalize_sofiot(s):
     return s
 
 
+def make_sofiot(word):
+    for k, v in zip('כמנפצ', 'ךםןףץ'):
+        if word.endswith(k):
+            return word[:-1] + v
+
+
 def stripped_instance(instance):
     return instance[:-1] if instance.endswith('ה') else instance
 
@@ -39,6 +45,10 @@ def enumerate_possible_forms(verb):
                     for suffix in suffixes:
                         t_instance = stripped_instance(instance[:-1]) if suffix else instance
                         if conj + prefix + t_instance + suffix == verb:
+                            if suffix:
+                                suffix = make_sofiot(suffix)
+                            else:
+                                body = make_sofiot(body)
                             yield (root, conj, prefix, instance, suffix, binyan, tense, body, sex, plurality)
 
 
