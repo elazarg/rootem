@@ -160,10 +160,12 @@ files = [
     ('mini_openlp.txt', parse_opnlp),
     ('mini_govil.txt', parse_govil),
     ('rootem-data/govil.txt', parse_govil, 'rootem-data/verbs_govil.tsv'),
-    ('../Hebrew_UD/he_htb-ud-dev.conllu', parse_opnlp, 'rootem-data/verbs_openlp.tsv'),
+    ('../Hebrew_UD/he_htb-ud-dev.conllu', parse_opnlp, 'rootem-data/verbs_openlp_dev.tsv'),
+    ('../Hebrew_UD/he_htb-ud-test.conllu', parse_opnlp, 'rootem-data/verbs_openlp_test.tsv'),
+    ('../Hebrew_UD/he_htb-ud-train.conllu', parse_opnlp, 'rootem-data/verbs_openlp_train.tsv'),
 ]
 
-for infilename, parser, outfilename in files[2:]:
+for infilename, parser, outfilename in files[4:]:
     with open(outfilename, 'w', encoding='utf-8') as outfile:
         for sentence_id, text, sentence in parse_file(infilename, parser):
             print('# sent_id =', sentence_id, file=outfile)
