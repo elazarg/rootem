@@ -36,7 +36,8 @@ def enumerate_possible_forms(verb):
 
         if not items:
             continue
-
+        if root == 'שכנז':
+            print(root)
         for binyan, tense, body, sex, plurality, instance in items:
             for conj in ['', 'ו']:
                 for prefix in ['', 'ש', 'לכש', 'כש', 'ה']:
@@ -56,5 +57,5 @@ def enumerate_possible_forms(verb):
 HEADER = ('שורש', "ו", "שימוש", "מילה", "סיומת", "בניין", "זמן", "גוף", "מין", "מספר")
 
 if __name__ == '__main__':
-    for x in enumerate_possible_forms('התאפיין'):
+    for x in enumerate_possible_forms("ושתשרבבוה"):
         print(x)
