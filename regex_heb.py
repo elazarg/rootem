@@ -45,5 +45,5 @@ def enumerate_possible_forms(verb):
 HEADER = ('שורש', "ו", "שימוש", "מילה", "סיומת", "בניין", "זמן", "גוף", "מין", "מספר")
 
 if __name__ == '__main__':
-    for x in enumerate_possible_forms('תשתגעו'):
+    for x in enumerate_possible_forms('תשתחוה'):
         print(x)
