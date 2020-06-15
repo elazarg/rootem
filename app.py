@@ -2,7 +2,7 @@ import random
 from regex_heb import enumerate_possible_forms, HEADER
 
 from flask import Flask, render_template, request, redirect, make_response
-app = Flask(__name__)
+app = Flask(__name__, template_folder='web/templates')
 
 
 @app.context_processor
@@ -28,10 +28,11 @@ def utility_processor():
 def preload():
     global_dict = {}
     files = [
-        '../rootem-data/verbs_openlp_dev.tsv',
-        '../rootem-data/verbs_openlp_test.tsv',
-        '../rootem-data/verbs_openlp_train.tsv',
-        # '../rootem-data/verbs_govil.tsv'
+        'rootem-data/verbs_openlp_dev.tsv',
+        'rootem-data/verbs_openlp_test.tsv',
+        'rootem-data/verbs_openlp_train.tsv',
+        # 'rootem-data/verbs_govil.tsv'
+        # 'rootem-data/verbs_govil.tsv'
     ]
     for file in files:
         with open(file, encoding='utf-8') as f:
@@ -51,7 +52,7 @@ def upload():
     # TODO: validation
     (_, corpus), (_, sent_id), *items, (_, email) = request.form.items()
     sentence = list(sorted(items, key=lambda x: int(x[0].split('_')[0])))
-    with open('../rootem-data/requests.tsv', 'a', encoding='utf-8') as f:
+    with open('rootem-data/requests.tsv', 'a', encoding='utf-8') as f:
         print("# email =", email, file=f)
         print("# corpus =", corpus, file=f)
         print("# sent_id =", sent_id, file=f)
