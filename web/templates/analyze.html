@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+{% block content %}
+    <form method="GET" action="{{ action }}" >
+        <label for="root_input">שורש</label>
+        <input id="root_input" name="verb" value="{{ verb }}"/>
+        <input type="submit"/>
+    </form>
+    <div>
+    <table>
+      <thead>
+        <tr>
+            {% for x in header %}
+                <th>{{ x }}</th>
+            {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+      {% for token in tokens %}
+        <tr>
+             {% for x in token %}
+                <td>{{ x }}</td>
+            {% endfor %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+{% endblock %}
