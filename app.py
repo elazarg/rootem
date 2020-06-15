@@ -1,8 +1,12 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 import random
 from regex_heb import enumerate_possible_forms, HEADER
 
 from flask import Flask, render_template, request, redirect, make_response
-app = Flask(__name__, template_folder='web/templates')
+app = Flask(__name__, template_folder='web/templates', static_folder='web/static')
 
 
 @app.context_processor
@@ -26,7 +30,7 @@ def utility_processor():
 
 
 def preload():
-    global_dict = {}
+    d = {}
     files = [
         'rootem-data/verbs_openlp_dev.tsv',
         'rootem-data/verbs_openlp_test.tsv',
@@ -40,8 +44,8 @@ def preload():
             for s in sentences:
                 sent_id, text, *lines = s.strip().split('\n')
                 corpus = file.split('/')[-1]
-                global_dict[(corpus, sent_id)] = (text[8:], [line.split('\t') for line in lines])
-    return global_dict
+                d[(corpus, sent_id)] = (text[8:], [line.split('\t') for line in lines])
+    return d
 
 
 global_dict = preload()
