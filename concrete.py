@@ -23,10 +23,29 @@ def stripped_instance(instance):
     return instance[:-1] if instance.endswith('ה') else instance
 
 
-CONJ = ['', 'ו']
 SUFFIXES = ['', 'ו', 'מ', 'נ', 'ה', 'כ', 'נו', 'ני', 'הו', 'תנ', 'תם', 'יהו']
-PREFIXES = ['', 'ש', 'לכש', 'כש']
+
 QUESTION_H = ['ה']
+
+ALL_PREFIXES = [""] + """
+ו
+וש
+כש
+וכש
+מכש
+ומכש
+שמכש
+ושמכש
+לכש
+שלכש
+ושלכש
+שכש
+ושכש
+מש
+ומש
+שמש
+ושמש
+""".strip().split()
 
 
 def enumerate_possible_forms(verb):
@@ -44,20 +63,19 @@ def enumerate_possible_forms(verb):
         if not items:
             continue
 
-        for binyan, tense, body, sex, plurality, instance in items:
-            for conj in CONJ:
-                for prefix in PREFIXES:
-                    suffixes = ['']
-                    if binyan in ['פעל', 'פיעל', 'הפעיל']:
-                        suffixes = SUFFIXES + QUESTION_H
-                    for suffix in suffixes:
-                        t_instance = stripped_instance(instance) if suffix else instance
-                        if conj + prefix + t_instance + suffix == verb:
-                            if suffix:
-                                suffix = make_sofiot(suffix)
-                            else:
-                                instance = make_sofiot(instance)
-                            yield (root, conj, prefix, instance, suffix, binyan, tense, body, sex, plurality)
+        for binyan, tense, body, gender, plurality, instance in items:
+            for prefix in ALL_PREFIXES:
+                suffixes = ['']
+                if binyan in ['פעל', 'פיעל', 'הפעיל']:
+                    suffixes = SUFFIXES + QUESTION_H
+                for suffix in suffixes:
+                    t_instance = stripped_instance(instance) if suffix else instance
+                    if prefix + t_instance + suffix == verb:
+                        if suffix:
+                            suffix = make_sofiot(suffix)
+                        else:
+                            instance = make_sofiot(instance)
+                        yield (root, prefix, instance, suffix, binyan, tense, body, gender, plurality)
 
 
 HEADER = ('שורש', "ו", "שימוש", "מילה", "סיומת", "בניין", "זמן", "גוף", "מין", "מספר")
@@ -71,72 +89,72 @@ def generate_all_verbs():
             for line in table:
                 if not line.strip():
                     continue
-                binyan, tense, body, sex, plurality, instance = line.strip().split()
-                for conj in CONJ:
-                    for prefix in PREFIXES:
-                        suffixes = ['']
-                        if binyan in ['פעל', 'פיעל', 'הפעיל']:
-                            suffixes = SUFFIXES + QUESTION_H
-                        for suffix in suffixes:
-                            t_instance = stripped_instance(instance) if suffix else instance
-                            verb = make_sofiot(conj + prefix + t_instance + suffix)
-                            print(verb, binyan, sep='\t', file=f)
+                binyan, tense, body, gender, plurality, instance = line.strip().split()
+                for prefix in ALL_PREFIXES:
+                    suffixes = ['']
+                    if binyan in ['פעל', 'פיעל', 'הפעיל']:
+                        suffixes = SUFFIXES + QUESTION_H
+                    for suffix in suffixes:
+                        t_instance = stripped_instance(instance) if suffix else instance
+                        verb = make_sofiot(prefix + t_instance + suffix)
+                        print(verb, binyan, sep='\t', file=f)
 
 
 def random_pref_suff(instance, binyan_for_suffix=None):
-    conj = random.choice(CONJ)
-    prefix = random.choice(PREFIXES)
+    [prefix] = random.choices(ALL_PREFIXES, weights=[1/(2**len(x)) for x in ALL_PREFIXES])
     suffix = ''
     if binyan_for_suffix in ['פעל', 'פיעל', 'הפעיל']:
         suffix = random.choice(SUFFIXES)
     t_instance = stripped_instance(instance) if suffix else instance
-    if suffix:
-        suffix = make_sofiot(suffix)
-    else:
-        t_instance = make_sofiot(t_instance)
-    return conj + prefix + t_instance + suffix
+    return prefix + t_instance + suffix
 
 
 def choose_random_words(num):
-    verbs = []
-    binyans = []
+    args = [[], [], [], [], [], []]
     for _ in range(num):
         root = random.choice(generate_table_for_root.roots)
         table = generate_table_for_root.read_template(root).split('\n')
         if not table[-1]:
             del table[-1]
         row = random.choice(table).split()
-        verbs.append(random_pref_suff(row[-1]))
-        binyans.append(row[0])
-    return verbs, binyans
+
+        # random_pref_suff(row[-1])
+        for i in range(len(args)-1):
+            args[i].append(row[i])
+        args[-1].append(make_sofiot(row[-1]))
+    return args
 
 
 def load_dataset(filename):
-    verbs = []
-    binyans = []
+    args = [[], [], [], [], [], []]
     with open(filename, encoding='utf-8') as f:
         for line in f:
             if not line.strip():
                 continue
             row = line.split()
-            verbs.append(row[0])
-            binyans.append(row[-1])
-    return verbs, binyans
+            for i in range(len(args)):
+                args[i].append(row[i])
+    return args
 
 
-def save_dataset(filename, verbs, binyans):
+def save_dataset(filename, args):
     with open(filename, 'w', encoding='utf-8') as f:
-        for verb, binyan in zip(verbs, binyans):
-            print(verb, binyan, sep='\t', file=f)
+        for arg in zip(*args):
+            print(*arg, sep='\t', file=f)
 
 
 def generate_random_dataset():
-    verbs, binyans = choose_random_words(100000)
-    save_dataset('random_train.tsv', verbs, binyans)
+    args = choose_random_words(100000)
+    save_dataset('random_train.tsv', args)
 
-    verbs, binyans = choose_random_words(10000)
-    save_dataset('random_validate.tsv', verbs, binyans)
+    args = choose_random_words(10000)
+    save_dataset('random_validate.tsv', args)
 
 
 if __name__ == '__main__':
-    generate_all_verbs()
+    # s = [random.choices(ALL_PREFIXES, weights=[1 / (2 ** len(x)) for x in ALL_PREFIXES])[0]
+    #         for x in range(30)]
+    # s.sort()
+    # for k in s:
+    #     print(k)
+    generate_random_dataset()
