@@ -63,6 +63,26 @@ def enumerate_possible_forms(verb):
 HEADER = ('שורש', "ו", "שימוש", "מילה", "סיומת", "בניין", "זמן", "גוף", "מין", "מספר")
 
 
+def generate_all_verbs():
+    with open('all_verbs.tsv', 'w', encoding='utf8') as f:
+        for root in generate_table_for_root.roots:
+            print(''.join(root), end='\r', flush=True)
+            table = generate_table_for_root.read_template(root).split('\n')
+            for line in table:
+                if not line.strip():
+                    continue
+                binyan, tense, body, sex, plurality, instance = line.strip().split()
+                for conj in CONJ:
+                    for prefix in PREFIXES:
+                        suffixes = ['']
+                        if binyan in ['פעל', 'פיעל', 'הפעיל']:
+                            suffixes = SUFFIXES + QUESTION_H
+                        for suffix in suffixes:
+                            t_instance = stripped_instance(instance) if suffix else instance
+                            verb = make_sofiot(conj + prefix + t_instance + suffix)
+                            print(verb, binyan, sep='\t', file=f)
+
+
 def random_pref_suff(instance, binyan_for_suffix=None):
     conj = random.choice(CONJ)
     prefix = random.choice(PREFIXES)
@@ -119,4 +139,4 @@ def generate_random_dataset():
 
 
 if __name__ == '__main__':
-    generate_random_dataset()
+    generate_all_verbs()
