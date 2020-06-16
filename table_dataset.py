@@ -27,7 +27,7 @@ def load_dataset(filename):
                 continue
             row = line.split()
             verbs.append(row[0])
-            binyans.append(row[0])
+            binyans.append(row[-1])
     return verbs, binyans
 
 
@@ -38,6 +38,6 @@ def save_dataset(filename, verbs, binyans):
 
 
 if __name__ == '__main__':
-    verbs, binyans = choose_random_words(100)
+    verbs, binyans = choose_random_words(10000)
     save_dataset('random.tsv', verbs, binyans)
     print(list(zip(*load_dataset('random.tsv'))))
