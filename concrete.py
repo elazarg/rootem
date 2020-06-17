@@ -110,23 +110,28 @@ def random_pref_suff(instance, binyan_for_suffix=None):
 
 
 def choose_random_words(num):
-    args = [[], [], [], [], [], []]
+    args = [[], [], [], [], [], [], [], [], [], []]
     for _ in range(num):
         root = random.choice(generate_table_for_root.roots)
         table = generate_table_for_root.read_template(root).split('\n')
         if not table[-1]:
             del table[-1]
-        row = random.choice(table).split()
+        *row, verb = random.choice(table).split()
+
+        radicals = generate_table_for_root.roots_map[root][0]
+        if len(radicals) == 3:
+            radicals = radicals[:2] + ['.'] + [radicals[2]]
+        row += radicals
 
         # random_pref_suff(row[-1])
         for i in range(len(args)-1):
             args[i].append(row[i])
-        args[-1].append(make_sofiot(row[-1]))
+        args[-1].append(make_sofiot(verb))
     return args
 
 
 def load_dataset(filename):
-    args = [[], [], [], [], [], []]
+    args = [[], [], [], [], [], [], [], [], [], []]
     with open(filename, encoding='utf-8') as f:
         for line in f:
             if not line.strip():
