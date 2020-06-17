@@ -150,7 +150,7 @@ def save_dataset(filename, args):
 
 def generate_random_dataset():
     args = choose_random_words(100000)
-    save_dataset('random_train.tsv', args)
+    save_dataset('random_train_100K.tsv', args)
 
     args = choose_random_words(10000)
     save_dataset('random_validate.tsv', args)
