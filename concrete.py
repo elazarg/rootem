@@ -81,23 +81,27 @@ def enumerate_possible_forms(verb):
 HEADER = ('שורש', "ו", "שימוש", "מילה", "סיומת", "בניין", "זמן", "גוף", "מין", "מספר")
 
 
-def generate_all_verbs():
-    with open('all_verbs.tsv', 'w', encoding='utf8') as f:
-        for root in generate_table_for_root.roots:
+def generate_all_verbs(SUF=False, PREF=False):
+    with open('synthetic/all_verbs_4.tsv', 'w', encoding='utf8') as f:
+        for root in generate_table_for_root.roots_4:
             print(''.join(root), end='\r', flush=True)
             table = generate_table_for_root.read_template(root).split('\n')
             for line in table:
                 if not line.strip():
                     continue
                 binyan, tense, body, gender, plurality, instance = line.strip().split()
-                for prefix in ALL_PREFIXES:
+                prefixes = ALL_PREFIXES if PREF else ['']
+                for prefix in prefixes:
                     suffixes = ['']
-                    if binyan in ['פעל', 'פיעל', 'הפעיל']:
+                    if SUF and binyan in ['פעל', 'פיעל', 'הפעיל']:
                         suffixes = SUFFIXES + QUESTION_H
                     for suffix in suffixes:
                         t_instance = stripped_instance(instance) if suffix else instance
-                        verb = make_sofiot(prefix + t_instance + suffix)
-                        print(verb, binyan, sep='\t', file=f)
+                        # verb = make_sofiot(prefix + t_instance + suffix)
+                        radicals = generate_table_for_root.roots_map_4[root][0]
+                        if len(radicals) == 3:
+                            radicals = radicals[:2] + ['.'] + [radicals[2]]
+                        print(binyan, tense, body, gender, plurality, *radicals, make_sofiot(instance), sep='\t', file=f)
 
 
 def random_pref_suff(instance, binyan_for_suffix=None):
@@ -150,10 +154,10 @@ def save_dataset(filename, args):
 
 def generate_random_dataset():
     args = choose_random_words(100000)
-    save_dataset('random_train_100K.tsv', args)
+    save_dataset('synthetic/random_train_100K.tsv', args)
 
     args = choose_random_words(10000)
-    save_dataset('random_validate.tsv', args)
+    save_dataset('synthetic/random_validate.tsv', args)
 
 
 if __name__ == '__main__':
@@ -162,4 +166,4 @@ if __name__ == '__main__':
     # s.sort()
     # for k in s:
     #     print(k)
-    generate_random_dataset()
+    generate_all_verbs()
