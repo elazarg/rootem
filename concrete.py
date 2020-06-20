@@ -81,9 +81,9 @@ def enumerate_possible_forms(verb):
 HEADER = ('שורש', "ו", "שימוש", "מילה", "סיומת", "בניין", "זמן", "גוף", "מין", "מספר")
 
 
-def generate_all_verbs(SUF=False, PREF=False):
-    with open('synthetic/all_4.tsv', 'w', encoding='utf8') as f:
-        for root in generate_table_for_root.roots_4:
+def generate_all_verbs(k: str, SUF=False, PREF=False):
+    with open('synthetic/all_{}.tsv'.format(k), 'w', encoding='utf8') as f:
+        for root in generate_table_for_root.roots[k]:
             print(''.join(root), end='\r', flush=True)
             table = generate_table_for_root.read_template(root).split('\n')
             for line in table:
@@ -96,9 +96,9 @@ def generate_all_verbs(SUF=False, PREF=False):
                     if SUF and binyan in ['פעל', 'פיעל', 'הפעיל']:
                         suffixes = SUFFIXES + QUESTION_H
                     for suffix in suffixes:
-                        t_instance = stripped_instance(instance) if suffix else instance
+                        # t_instance = stripped_instance(instance) if suffix else instance
                         # verb = make_sofiot(prefix + t_instance + suffix)
-                        radicals = generate_table_for_root.roots_map_4[root][0]
+                        radicals = generate_table_for_root.roots_map[k][root][0]
                         if len(radicals) == 3:
                             radicals = radicals[:2] + ['.'] + [radicals[2]]
                         print(binyan, tense, body, gender, plurality, *radicals, make_sofiot(instance), sep='\t', file=f)
@@ -116,13 +116,13 @@ def random_pref_suff(instance, binyan_for_suffix=None):
 def choose_random_words(num):
     args = [[], [], [], [], [], [], [], [], [], []]
     for _ in range(num):
-        root = random.choice(generate_table_for_root.roots_all)
+        root = random.choice(generate_table_for_root.roots['combined'])
         table = generate_table_for_root.read_template(root).split('\n')
         if not table[-1]:
             del table[-1]
         *row, verb = random.choice(table).split()
 
-        radicals = generate_table_for_root.roots_map_all[root][0]
+        radicals = generate_table_for_root.roots_map['combined'][root][0]
         if len(radicals) == 3:
             radicals = radicals[:2] + ['.'] + [radicals[2]]
         row += radicals
@@ -166,4 +166,6 @@ if __name__ == '__main__':
     # s.sort()
     # for k in s:
     #     print(k)
-    generate_all_verbs()
+    generate_all_verbs('3')
+    generate_all_verbs('4')
+    generate_all_verbs('combined')
