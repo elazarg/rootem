@@ -82,7 +82,7 @@ HEADER = ('שורש', "ו", "שימוש", "מילה", "סיומת", "בניין"
 
 
 def generate_all_verbs(SUF=False, PREF=False):
-    with open('synthetic/all_verbs_4.tsv', 'w', encoding='utf8') as f:
+    with open('synthetic/all_4.tsv', 'w', encoding='utf8') as f:
         for root in generate_table_for_root.roots_4:
             print(''.join(root), end='\r', flush=True)
             table = generate_table_for_root.read_template(root).split('\n')
@@ -116,13 +116,13 @@ def random_pref_suff(instance, binyan_for_suffix=None):
 def choose_random_words(num):
     args = [[], [], [], [], [], [], [], [], [], []]
     for _ in range(num):
-        root = random.choice(generate_table_for_root.roots)
+        root = random.choice(generate_table_for_root.roots_all)
         table = generate_table_for_root.read_template(root).split('\n')
         if not table[-1]:
             del table[-1]
         *row, verb = random.choice(table).split()
 
-        radicals = generate_table_for_root.roots_map[root][0]
+        radicals = generate_table_for_root.roots_map_all[root][0]
         if len(radicals) == 3:
             radicals = radicals[:2] + ['.'] + [radicals[2]]
         row += radicals
