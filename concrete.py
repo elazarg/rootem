@@ -84,7 +84,7 @@ HEADER = ('שורש', "ו", "שימוש", "מילה", "סיומת", "בניין"
 def generate_all_verbs(k: str, SUF=False, PREF=False):
     with open('synthetic/all_{}.tsv'.format(k), 'w', encoding='utf8') as f:
         for root in generate_table_for_root.roots[k]:
-            print(''.join(root), end='\r', flush=True)
+            # print(''.join(root), end='\r', flush=True)
             table = generate_table_for_root.read_template(root).split('\n')
             for line in table:
                 if not line.strip():
@@ -144,6 +144,16 @@ def load_dataset(filename):
             for i in range(len(args)):
                 args[i].append(row[i])
     return args
+
+
+def iter_items(filename):
+    with open(filename, encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            row = line.split()
+            yield row[-1], tuple(row[:-1])
 
 
 def save_dataset(filename, args):
