@@ -18,8 +18,12 @@ class NaiveModel:
 
     @staticmethod
     def learn_from_file(filename) -> 'NaiveModel':
+        return NaiveModel.learn_from_items(iter_items(filename))
+
+    @staticmethod
+    def learn_from_items(items) -> 'NaiveModel':
         rev_dict = defaultdict(list)
-        for k, v in iter_items(filename):
+        for k, v in items:
             rev_dict[k].append(dict(zip(NAMES, v)))
         return NaiveModel(rev_dict)
 
@@ -69,19 +73,13 @@ class NaiveModel:
     def items(self):
         return self.rev_dict.items()
 
+    def unique_items(self):
+        return [(k, [v[0][name] for name in NAMES])
+                for k, v in self.rev_dict.items()
+                if len(v) == 1]
+
     def values(self):
         return self.rev_dict.values()
-
-
-def create_unique_file(arity):
-    infilename = 'synthetic/all_{}.tsv'.format(arity)
-    outfilename = 'synthetic/unique_{}.tsv'.format(arity)
-    model = NaiveModel.learn_from_file(infilename)
-    with open(outfilename, 'w', encoding='utf-8') as f:
-        for word, values in model.items():
-            if len(values) > 1:
-                continue
-            print(*values[0].values(), word, sep='\t', file=f)
 
 
 def print_stats(filename):
@@ -91,8 +89,3 @@ def print_stats(filename):
     for k, v in w.items():
         print(f'{k}\t{v}')
     print(model['נאחז'])
-
-
-if __name__ == '__main__':
-    # print_stats('synthetic/all_combined.tsv')
-    create_unique_file('combined')

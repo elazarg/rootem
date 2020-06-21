@@ -82,26 +82,25 @@ HEADER = ('שורש', "ו", "שימוש", "מילה", "סיומת", "בניין"
 
 
 def generate_all_verbs(k: str, SUF=False, PREF=False):
-    with open('synthetic/all_{}.tsv'.format(k), 'w', encoding='utf8') as f:
-        for root in generate_table_for_root.roots[k]:
-            # print(''.join(root), end='\r', flush=True)
-            table = generate_table_for_root.read_template(root).split('\n')
-            for line in table:
-                if not line.strip():
-                    continue
-                binyan, tense, body, gender, plurality, instance = line.strip().split()
-                prefixes = ALL_PREFIXES if PREF else ['']
-                for prefix in prefixes:
-                    suffixes = ['']
-                    if SUF and binyan in ['פעל', 'פיעל', 'הפעיל']:
-                        suffixes = SUFFIXES + QUESTION_H
-                    for suffix in suffixes:
-                        # t_instance = stripped_instance(instance) if suffix else instance
-                        # verb = make_sofiot(prefix + t_instance + suffix)
-                        radicals = generate_table_for_root.roots_map[k][root][0]
-                        if len(radicals) == 3:
-                            radicals = radicals[:2] + ['.'] + [radicals[2]]
-                        print(binyan, tense, body, gender, plurality, *radicals, make_sofiot(instance), sep='\t', file=f)
+    for root in generate_table_for_root.roots[k]:
+        # print(''.join(root), end='\r', flush=True)
+        table = generate_table_for_root.read_template(root).split('\n')
+        for line in table:
+            if not line.strip():
+                continue
+            binyan, tense, body, gender, plurality, instance = line.strip().split()
+            prefixes = ALL_PREFIXES if PREF else ['']
+            for prefix in prefixes:
+                suffixes = ['']
+                if SUF and binyan in ['פעל', 'פיעל', 'הפעיל']:
+                    suffixes = SUFFIXES + QUESTION_H
+                for suffix in suffixes:
+                    # t_instance = stripped_instance(instance) if suffix else instance
+                    # verb = make_sofiot(prefix + t_instance + suffix)
+                    radicals = generate_table_for_root.roots_map[k][root][0]
+                    if len(radicals) == 3:
+                        radicals = radicals[:2] + ['.'] + [radicals[2]]
+                    yield (make_sofiot(instance), (binyan, tense, body, gender, plurality, *radicals))
 
 
 def random_pref_suff(instance, binyan_for_suffix=None):
@@ -170,13 +169,3 @@ def generate_random_dataset():
     args = choose_random_words(10000)
     save_dataset('synthetic/random_validate.tsv', args)
 
-
-if __name__ == '__main__':
-    # s = [random.choices(ALL_PREFIXES, weights=[1 / (2 ** len(x)) for x in ALL_PREFIXES])[0]
-    #         for x in range(30)]
-    # s.sort()
-    # for k in s:
-    #     print(k)
-    generate_all_verbs('3')
-    generate_all_verbs('4')
-    generate_all_verbs('combined')
