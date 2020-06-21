@@ -138,7 +138,8 @@ def load_dataset(filename):
     args = [[], [], [], [], [], [], [], [], [], []]
     with open(filename, encoding='utf-8') as f:
         for line in f:
-            if not line.strip():
+            line = line.strip()
+            if not line:
                 continue
             row = line.split()
             for i in range(len(args)):

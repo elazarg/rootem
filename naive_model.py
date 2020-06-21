@@ -1,7 +1,7 @@
 from collections import defaultdict
 from concrete import iter_items
 from collections import Counter
-from encoding import NAMES, FEATURES, wordlist2numpy, list_from_category, numpy2wordlist
+from encoding import NAMES, FEATURES, wordlist2numpy, numpy2word, list_from_category, numpy2wordlist, from_category
 import numpy as np
 import torch
 
@@ -21,6 +21,15 @@ class NaiveModel:
         rev_dict = defaultdict(list)
         for k, v in iter_items(filename):
             rev_dict[k].append(dict(zip(NAMES, v)))
+        return NaiveModel(rev_dict)
+
+    @staticmethod
+    def learn_from_data(data) -> 'NaiveModel':
+        x_train, y_train = data
+        rev_dict = defaultdict(list)
+        for word, *indices in zip(x_train, *[y_train[name] for name in NAMES]):
+            items = zip(NAMES, indices)
+            rev_dict[numpy2word(word)].append({name: from_category(name, index) for name, index in items})
         return NaiveModel(rev_dict)
 
     def __getitem__(self, item: str):
@@ -53,6 +62,9 @@ class NaiveModel:
 
     def __len__(self):
         return len(self.rev_dict)
+
+    def __iter__(self):
+        return iter(self.rev_dict)
 
     def items(self):
         return self.rev_dict.items()

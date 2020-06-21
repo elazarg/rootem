@@ -11,8 +11,12 @@ def wordlist2numpy(lines):
                                maxlen=12, dtype=int, value=0)
 
 
+def numpy2word(input):
+    return ''.join(chr(x) for x in input if x)
+
+
 def numpy2wordlist(inputs):
-    return [''.join(chr(x) for x in input if x) for input in inputs]
+    return [numpy2word(input) for input in inputs]
 
 
 RADICALS = ['.'] + list('אבגדהוזחטיכלמנסעפצקרשת') + ["ג'", "ז'", "צ'", 'שׂ']
@@ -35,6 +39,7 @@ FEATURES = {
     'R3': RADICALS,
     'R4': RADICALS,
 }
+
 
 def to_category(name, b):
     return FEATURES[name].index(b)
