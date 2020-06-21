@@ -73,8 +73,19 @@ class NaiveModel:
         return self.rev_dict.values()
 
 
-def print_stats():
-    model = NaiveModel.learn_from_file('synthetic/all_combined.tsv')
+def create_unique_file(arity):
+    infilename = 'synthetic/all_{}.tsv'.format(arity)
+    outfilename = 'synthetic/unique_{}.tsv'.format(arity)
+    model = NaiveModel.learn_from_file(infilename)
+    with open(outfilename, 'w', encoding='utf-8') as f:
+        for word, values in model.items():
+            if len(values) > 1:
+                continue
+            print(*values[0].values(), word, sep='\t', file=f)
+
+
+def print_stats(filename):
+    model = NaiveModel.learn_from_file(filename)
     print(len(model))
     w = Counter(len(v) for v in model.values())
     for k, v in w.items():
@@ -83,10 +94,5 @@ def print_stats():
 
 
 if __name__ == '__main__':
-    # print_stats()
-    model = NaiveModel.learn_from_file('synthetic/all_4.tsv')
-    inputs = wordlist2numpy('ממורמר התפרקדנו'.split())
-    print(inputs)
-    res = model.run(inputs)
-    for k in NAMES:
-        print(k, list_from_category(k, res[k].argmax(axis=-1)))
+    # print_stats('synthetic/all_combined.tsv')
+    create_unique_file('combined')
