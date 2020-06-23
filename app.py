@@ -1,5 +1,5 @@
 import random
-from regex_heb import enumerate_possible_forms, HEADER
+from concrete import enumerate_possible_forms, HEADER
 
 from flask import Flask, render_template, request, redirect, make_response
 app = Flask(__name__, template_folder='web/templates', static_folder='web/static')
