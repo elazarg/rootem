@@ -35,28 +35,29 @@ def sentence_to_array(sentence: List[VerbToken]):
 
 # corpus = load_verb_file('rootem-data/verbs_govil.tsv')
 
-with open('rootem-data/requests.tsv', encoding='utf-8') as f:
-    items = defaultdict(set)
-    for line in f:
-        if 'VERB' in line:
-            _, word, _, binyan, root = line.strip().split('\t')
-            word = word.strip(string.punctuation)
-            for c in 'וכשכת':
-                if word[0] == c and root[0] != c:
-                    word = word[1:]
-            items[word].add((binyan, root))
+if __name__ == '__main__':
+    with open('rootem-data/requests.tsv', encoding='utf-8') as f:
+        items = defaultdict(set)
+        for line in f:
+            if 'VERB' in line:
+                _, word, _, binyan, root = line.strip().split('\t')
+                word = word.strip(string.punctuation)
+                for c in 'וכשכת':
+                    if word[0] == c and root[0] != c:
+                        word = word[1:]
+                items[word].add((binyan, root))
 
-    roots = Counter()
-    for word, values in sorted(items.items()):
-        for binyan, root in values:
-            roots[root] += 1
-            # print(word, binyan, root, sep='\t')
+        roots = Counter()
+        for word, values in sorted(items.items()):
+            for binyan, root in values:
+                roots[root] += 1
+                # print(word, binyan, root, sep='\t')
 
-    for k, v in roots.items():
-        print(f'{k},{v}')
-    print(len(roots.keys()))
-    #
-    # for word, values in sorted(items.items()):
-    #     if len(values) > 1:
-    #         for binyan, root in values:
-    #             print(word, binyan, root)
+        for k, v in roots.items():
+            print(f'{k},{v}')
+        print(len(roots.keys()))
+        #
+        # for word, values in sorted(items.items()):
+        #     if len(values) > 1:
+        #         for binyan, root in values:
+        #             print(word, binyan, root)
