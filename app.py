@@ -1,7 +1,11 @@
 import random
-from concrete import enumerate_possible_forms, HEADER
+import re
+from collections import defaultdict
 
 from flask import Flask, render_template, request, redirect, make_response
+
+from concrete import enumerate_possible_forms, HEADER
+
 app = Flask(__name__, template_folder='web/templates', static_folder='web/static')
 
 
@@ -26,7 +30,7 @@ def utility_processor():
 
 
 def preload():
-    d = {}
+    d = defaultdict(dict)
     files = [
         'rootem-data/verbs_openlp_dev.tsv',
         'rootem-data/verbs_openlp_test.tsv',
@@ -34,13 +38,18 @@ def preload():
         # 'rootem-data/verbs_govil.tsv'
         # 'rootem-data/verbs_govil.tsv'
     ]
+    with open('rootem-data/requests.tsv', encoding='utf-8') as f:
+        requests = f.read()
+    seen = set(re.findall(R'# sent_id = ([0-9.]+)', requests))
     for file in files:
         with open(file, encoding='utf-8') as f:
             sentences = f.read().split('# sent_id = ')[1:]
             for s in sentences:
                 sent_id, text, *lines = s.strip().split('\n')
+                if sent_id in seen:
+                    continue
                 corpus = file.split('/')[-1]
-                d[(corpus, sent_id)] = (text[8:], [line.split('\t') for line in lines])
+                d[corpus][sent_id] = (text[8:], [line.split('\t') for line in lines])
     return d
 
 
@@ -51,15 +60,17 @@ global_dict = preload()
 def upload():
     # TODO: validation
     (_, corpus), (_, sent_id), *items, (_, email) = request.form.items()
-    sentence = list(sorted(items, key=lambda x: int(x[0].split('_')[0])))
-    with open('rootem-data/requests.tsv', 'a', encoding='utf-8') as f:
-        print("# email =", email, file=f)
-        print("# corpus =", corpus, file=f)
-        print("# sent_id =", sent_id, file=f)
-        for i in range(0, len(sentence), 5):
-            (id, _), (_, word), (_, pos), (_, binyan), (_, root) = sentence[i:i+5]
-            print(id, word, pos or '_', binyan or '_', root or '_', sep='\t', file=f)
-        print(file=f)
+    if sent_id in global_dict[corpus]:
+        del global_dict[corpus][sent_id]
+        sentence = list(sorted(items, key=lambda x: int(x[0].split('_')[0])))
+        with open('rootem-data/requests.tsv', 'a', encoding='utf-8') as f:
+            print("# email =", email, file=f)
+            print("# corpus =", corpus, file=f)
+            print("# sent_id =", sent_id, file=f)
+            for i in range(0, len(sentence), 5):
+                (id, _), (_, word), (_, pos), (_, binyan), (_, root) = sentence[i:i+5]
+                print(id, word, pos or '_', binyan or '_', root or '_', sep='\t', file=f)
+            print(file=f)
     resp = make_response(redirect('/'))
     resp.set_cookie('email', email)
     return resp
@@ -68,14 +79,16 @@ def upload():
 @app.route('/', methods=['GET'])
 def random_sentence():
     email = request.cookies.get('email', 'nobody@nowhere.com')
-    (corpus, sent_id), (text, lines) = random.choice(list(global_dict.items()))
+    corpus = random.choice(list(global_dict))
+    sent_id = random.choice(list(global_dict[corpus]))
+    (text, lines) = global_dict[corpus][sent_id]
     return render_template('index.html', corpus=corpus, sent_id=sent_id, text=text, lines=lines, email=email)
 
 
 @app.route('/<corpus>/<sent_id>')
 def specific_sentence(corpus, sent_id):
     email = request.cookies.get('email', 'nobody@nowhere.com')
-    text, lines = global_dict[(corpus, sent_id)]
+    text, lines = global_dict[corpus][sent_id]
     return render_template('index.html', corpus=corpus, sent_id=sent_id, text=text, lines=lines, email=email)
 
 
