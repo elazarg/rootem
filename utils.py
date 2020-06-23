@@ -38,6 +38,7 @@ class Stats:
         self.running_divisor = 0
         self.running_loss = []
         self.confusion = {k: np.zeros((len(FEATURES[k]), len(FEATURES[k]))) for k in NAMES}
+        self.confusion_logprobs = {k: np.zeros((len(FEATURES[k]), len(FEATURES[k]))) for k in NAMES}
 
     def assert_resonable_initial(self, losses):
         if not self.initial_validated:
@@ -94,15 +95,27 @@ class Stats:
         accuracies = {k: v / self.running_divisor
                       for k, v in self.running_corrects.items()}
 
+        self.confusion = {k: v / self.running_divisor
+                          for k, v in self.confusion.items()}
+
+        self.confusion_logprobs = {k: v / self.running_divisor
+                                   for k, v in self.confusion_logprobs.items()}
+
         self.cli(mean_loss, accuracies)
         self.wandb(mean_loss, accuracies)
 
     def update(self, loss, batch_size, d):
         self.running_loss.append(loss)
         self.running_divisor += batch_size
-        for k, (output, label) in d.items():
+        for k, (output, labels) in d.items():
             preds = torch.argmax(output, dim=1)
-            self.running_corrects[k] += torch.sum(preds == label)
+            self.running_corrects[k] += torch.sum(preds == labels)
 
-            for label, pred in zip(label.cpu().data.numpy(), preds.cpu().data.numpy()):
-                self.confusion[k][label, pred] += 1
+            labels = labels.cpu().data.numpy()
+            preds = preds.cpu().data.numpy()
+            for l, p in zip(labels, preds):
+                self.confusion[k][l, p] += 1
+
+            softmax = torch.nn.functional.log_softmax(output, dim=1).cpu().data.numpy()
+            for l, out in zip(labels, softmax):
+                self.confusion_logprobs[k][l, :] += out
