@@ -2,7 +2,7 @@ import numpy as np
 import wandb
 import torch
 
-from encoding import NAMES, FEATURES
+from encoding import FEATURES
 
 
 def pad_sequences(sequences, maxlen, dtype, value) -> np.ndarray:
@@ -27,18 +27,19 @@ def pad_sequences(sequences, maxlen, dtype, value) -> np.ndarray:
 
 
 class Stats:
-    def __init__(self, runsize):
+    def __init__(self, names, runsize):
         self.runsize = runsize
         self.initial_validated = False
         self.epoch = 0
+        self.names = list(names)
         self.zero_run()
 
     def zero_run(self):
-        self.running_corrects = {k: 0.0 for k in NAMES}
+        self.running_corrects = {k: 0.0 for k in self.names}
         self.running_divisor = 0
         self.running_loss = []
-        self.confusion = {k: np.zeros((len(FEATURES[k]), len(FEATURES[k]))) for k in NAMES}
-        self.confusion_logprobs = {k: np.zeros((len(FEATURES[k]), len(FEATURES[k]))) for k in NAMES}
+        self.confusion = {k: np.zeros((len(FEATURES[k]), len(FEATURES[k]))) for k in self.names}
+        self.confusion_logprobs = {k: np.zeros((len(FEATURES[k]), len(FEATURES[k]))) for k in self.names}
 
     def assert_resonable_initial(self, losses):
         if not self.initial_validated:
