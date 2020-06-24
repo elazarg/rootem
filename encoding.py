@@ -28,7 +28,7 @@ GENDER = 'זכר נקבה'.split()
 PLURAL = 'יחיד רבים'.split()
 
 NAMES = ['B', 'T', 'V', 'G', 'P', 'R1', 'R2', 'R3', 'R4']
-FEATURES = {
+CLASSES = {
     'B': BINYAN,
     'T': TENSE,
     'V': VOICE,
@@ -42,11 +42,11 @@ FEATURES = {
 
 
 def to_category(name, b):
-    return FEATURES[name].index(b)
+    return CLASSES[name].index(b)
 
 
 def from_category(name, index):
-    return FEATURES[name][index]
+    return CLASSES[name][index]
 
 
 def list_to_category(name, bs):

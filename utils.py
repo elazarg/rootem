@@ -2,7 +2,7 @@ import numpy as np
 import wandb
 import torch
 
-from encoding import FEATURES
+from encoding import CLASSES
 
 
 def pad_sequences(sequences, maxlen, dtype, value) -> np.ndarray:
@@ -38,13 +38,13 @@ class Stats:
         self.running_corrects = {k: 0.0 for k in self.names}
         self.running_divisor = 0
         self.running_loss = []
-        self.confusion = {k: np.zeros((len(FEATURES[k]), len(FEATURES[k]))) for k in self.names}
-        self.confusion_logprobs = {k: np.zeros((len(FEATURES[k]), len(FEATURES[k]))) for k in self.names}
+        self.confusion = {k: np.zeros((len(CLASSES[k]), len(CLASSES[k]))) for k in self.names}
+        self.confusion_logprobs = {k: np.zeros((len(CLASSES[k]), len(CLASSES[k]))) for k in self.names}
 
     def assert_resonable_initial(self, losses):
         if not self.initial_validated:
             for k in losses:
-                expected_ce_losses = -np.log(1 / len(FEATURES[k]))
+                expected_ce_losses = -np.log(1 / len(CLASSES[k]))
                 assert abs(1 - losses[k] / expected_ce_losses) < 0.2
             self.initial_validated = True
 

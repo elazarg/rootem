@@ -1,7 +1,7 @@
 from collections import defaultdict
 from concrete import iter_items
 from collections import Counter
-from encoding import NAMES, FEATURES, wordlist2numpy, numpy2word, list_from_category, numpy2wordlist, from_category
+from encoding import NAMES, CLASSES, wordlist2numpy, numpy2word, list_from_category, numpy2wordlist, from_category
 import numpy as np
 import torch
 
@@ -51,9 +51,9 @@ class NaiveModel:
         transposed = self.transpose_and_merge([self[w] for w in words])
         res = {}
         for k in NAMES:
-            res[k] = np.zeros((inputs.shape[0], len(FEATURES[k])))
+            res[k] = np.zeros((inputs.shape[0], len(CLASSES[k])))
             for w, t in enumerate(transposed):
-                indices = [FEATURES[k].index(v) for v in t[k]]
+                indices = [CLASSES[k].index(v) for v in t[k]]
                 n = len(indices)
                 for i in indices:
                     res[k][w][i] += 1 / n
