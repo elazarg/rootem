@@ -1,3 +1,5 @@
+from collections import defaultdict
+from dataclasses import dataclass
 from typing import List, Tuple
 from typing import NamedTuple
 
@@ -156,7 +158,7 @@ def parse_file(filename, parser):
         yield sentence_id, text, [merge(id, t, subs) for id, (t, subs) in enumerate(tokens)]
 
 
-if __name__ == '__main__':
+def main_all():
     files = [
         ('mini_openlp.txt', parse_opnlp),
         ('mini_govil.txt', parse_govil),
@@ -176,3 +178,54 @@ if __name__ == '__main__':
                     verb = token.xpos if binyan != '_' else '_'
                     print(token.id, token.form, verb, binyan, sep='\t', file=outfile)
                 print(file=outfile)
+
+
+class Token4(NamedTuple):
+    index: str
+    surface: str
+    pos: str
+    binyan: str
+    root: str
+
+
+class Request(NamedTuple):
+    email: str
+    corpus: str
+    sent_id: str
+    content: Tuple[Token4, ...]
+
+
+def read_requests():
+    with open('rootem-data/requests.tsv', encoding='utf8') as f:
+        requests = f.read().split('\n\n')
+    for raw_request in requests:
+        raw_request = raw_request.strip()
+        if not raw_request:
+            continue
+        email, corpus, sent_id, *content = raw_request.split('\n')
+
+        yield Request(
+            email=email.split(' = ')[1].strip(),
+            corpus=corpus.split(' = ')[1].strip(),
+            sent_id=sent_id.split(' = ')[1].strip(),
+            content=tuple(Token4(*line.strip().split('\t')) for line in content)
+        )
+
+
+def collect_requests():
+    dd = defaultdict(set)
+    rs = list(read_requests())
+    for r in rs:
+        dd[r.sent_id].add(r)
+    c = 0
+    for k in dd:
+        if len(dd[k]) > 1:
+            c += 1
+            for item in dd[k]:
+                print(item)
+            print()
+    print(c, len(dd), len(rs))
+
+
+if __name__ == '__main__':
+    collect_requests()
