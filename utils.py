@@ -41,7 +41,7 @@ class Stats:
         self.confusion = {k: np.zeros((len(CLASSES[k]), len(CLASSES[k]))) for k in self.names}
         self.confusion_logprobs = {k: np.zeros((len(CLASSES[k]), len(CLASSES[k]))) for k in self.names}
 
-    def assert_resonable_initial(self, losses):
+    def assert_reasonable_initial(self, losses):
         if not self.initial_validated:
             for k in losses:
                 expected_ce_losses = -np.log(1 / len(CLASSES[k]))
