@@ -2,7 +2,7 @@ import numpy as np
 import wandb
 import torch
 
-from encoding import CLASSES
+from encoding import class_size, class_name
 
 
 def pad_sequences(sequences, maxlen, dtype, value) -> np.ndarray:
@@ -38,13 +38,13 @@ class Stats:
         self.running_corrects = {k: 0.0 for k in self.names}
         self.running_divisor = 0
         self.running_loss = []
-        self.confusion = {k: np.zeros((len(CLASSES[k]), len(CLASSES[k]))) for k in self.names}
-        self.confusion_logprobs = {k: np.zeros((len(CLASSES[k]), len(CLASSES[k]))) for k in self.names}
+        self.confusion = {k: np.zeros((class_size(k), class_size(k))) for k in self.names}
+        self.confusion_logprobs = {k: np.zeros((class_size(k), class_size(k))) for k in self.names}
 
     def assert_reasonable_initial(self, losses):
         if not self.initial_validated:
             for k in losses:
-                expected_ce_losses = -np.log(1 / len(CLASSES[k]))
+                expected_ce_losses = -np.log(1 / class_size(k))
                 assert abs(1 - losses[k] / expected_ce_losses) < 0.2
             self.initial_validated = True
 
@@ -77,7 +77,7 @@ class Stats:
     def cli(self, mean_loss, accuracies):
         print("{:2} {:5}/{:5}".format(self.epoch, self.batch, self.batches_in_phase), end=' ')
         for k, v in accuracies.items():
-            print("{}_acc: {:.3f}".format(k, v), end=' ')
+            print("{}_acc: {:.3f}".format(class_name(k), v), end=' ')
         print("Loss: {:.4f}".format(mean_loss), end='\r')
 
     def wandb(self, mean_loss, accuracies):
@@ -87,8 +87,8 @@ class Stats:
             'epoch': self.epoch,
             # 'batch': batch,
             f"{pref}/Loss": mean_loss,
-            **{f"{pref}/Accuracy_{k}": accuracies[k] for k in accuracies},
-            **{f"{pref}/Confusion_{k}": self.confusion[k] for k in self.confusion}
+            **{f"{pref}/Accuracy_{class_name(k)}": accuracies[k] for k in accuracies},
+            **{f"{pref}/Confusion_{class_name(k)}": self.confusion[k] for k in self.confusion}
         })
 
     def callback(self):

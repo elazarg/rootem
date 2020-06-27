@@ -41,6 +41,18 @@ CLASSES = {
 }
 
 
+def combined_shape(combination):
+    return tuple(len(CLASSES[k]) for k in combination)
+
+
+def class_name(combination):
+    return 'x'.join(combination)
+
+
+def class_size(combination):
+    return np.prod(combined_shape(combination))
+
+
 def to_category(name, b):
     return CLASSES[name].index(b)
 
