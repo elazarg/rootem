@@ -204,11 +204,21 @@ def read_requests():
             continue
         email, corpus, sent_id, *content = raw_request.split('\n')
 
+        def make_token(line):
+            index, surface, pos, binyan, root = line.strip().split('\t')
+            if binyan != '_' and pos == '_':
+                pos = 'VERB'
+            if 'X' in root or 'x' in root:
+                pos = binyan = root = '_'
+            if root.endswith('ה'):
+                root = root[:-1] + 'י'
+            return Token4(index, surface, pos, binyan, root)
+
         yield Request(
             email=email.split(' = ')[1].strip(),
             corpus=corpus.split(' = ')[1].strip(),
             sent_id=sent_id.split(' = ')[1].strip(),
-            content=tuple(Token4(*line.strip().split('\t')) for line in content)
+            content=tuple(make_token(line) for line in content)
         )
 
 
@@ -221,8 +231,10 @@ def collect_requests():
     for k in dd:
         if len(dd[k]) > 1:
             c += 1
-            for item in dd[k]:
-                print(item)
+            print(k)
+            for items in zip(*[x.content for x in dd[k]]):
+                if len(set(items)) > 1:
+                    print(items)
             print()
     print(c, len(dd), len(rs))
 
