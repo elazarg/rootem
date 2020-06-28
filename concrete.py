@@ -1,9 +1,5 @@
 import random
-from root_verb_tables import generate_table_for_root, heb_io
-
-
-def read_roots(verb, n):
-    return [''.join(r) for r in heb_io.read_roots(n) if set(r) & set(verb)]
+from root_verb_tables import generate_table_for_root
 
 
 def normalize_sofiot(s):
@@ -50,10 +46,11 @@ ALL_PREFIXES = [""] + """
 
 def enumerate_possible_forms(verb):
     verb = normalize_sofiot(verb)
-
-    roots = read_roots(verb, 3) + read_roots(verb, 4)
-    for root in roots:
-        form = generate_table_for_root.read_template(root)
+    roots_map = generate_table_for_root.load_roots_map('combined')
+    for root, (radicals, tag) in roots_map.items():
+        if not set(root) & set(verb):
+            continue
+        form = generate_table_for_root.read_template(radicals, tag)
         items = []
         for line in form.strip().split('\n'):
             item = [x.strip() for x in line.split()]
@@ -81,10 +78,11 @@ def enumerate_possible_forms(verb):
 HEADER = ('שורש', "ו", "שימוש", "מילה", "סיומת", "בניין", "זמן", "גוף", "מין", "מספר")
 
 
-def generate_all_verbs(k: str, SUF=False, PREF=False):
-    for root in generate_table_for_root.roots[k]:
+def generate_all_verbs(roots_submap, roots, SUF=False, PREF=False):
+    for root in roots:
+        (radicals, tag) = roots_submap[root]
         # print(''.join(root), end='\r', flush=True)
-        table = generate_table_for_root.read_template(root).split('\n')
+        table = generate_table_for_root.read_template(radicals, tag).split('\n')
         for line in table:
             if not line.strip():
                 continue
@@ -97,7 +95,6 @@ def generate_all_verbs(k: str, SUF=False, PREF=False):
                 for suffix in suffixes:
                     # t_instance = stripped_instance(instance) if suffix else instance
                     # verb = make_sofiot(prefix + t_instance + suffix)
-                    radicals = generate_table_for_root.roots_map[k][root][0]
                     if len(radicals) == 3:
                         radicals = radicals[:2] + ['.'] + [radicals[2]]
                     yield (make_sofiot(instance), (binyan, tense, body, gender, plurality, *radicals))
@@ -113,15 +110,18 @@ def random_pref_suff(instance, binyan_for_suffix=None):
 
 
 def choose_random_words(num):
+    roots_submap = generate_table_for_root.load_roots_map('combined')
+    roots = list(roots_submap)
     args = [[], [], [], [], [], [], [], [], [], []]
     for _ in range(num):
-        root = random.choice(generate_table_for_root.roots['combined'])
-        table = generate_table_for_root.read_template(root).split('\n')
+        root = random.choice(roots)
+        tag = roots_submap[root]
+        table = generate_table_for_root.read_template(root, tag).split('\n')
         if not table[-1]:
             del table[-1]
         *row, verb = random.choice(table).split()
 
-        radicals = generate_table_for_root.roots_map['combined'][root][0]
+        radicals = roots_submap[root][0]
         if len(radicals) == 3:
             radicals = radicals[:2] + ['.'] + [radicals[2]]
         row += radicals

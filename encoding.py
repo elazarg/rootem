@@ -1,5 +1,25 @@
-import utils
 import numpy as np
+
+
+def pad_sequences(sequences, maxlen, dtype, value) -> np.ndarray:
+    # based on keras' pad_sequences()
+    num_samples = len(sequences)
+
+    # take the sample shape from the first non empty sequence
+    # checking for consistency in the main loop below.
+    sample_shape = tuple()
+    for s in sequences:
+        if len(s) > 0:
+            sample_shape = np.asarray(s).shape[1:]
+            break
+
+    x = np.full((num_samples, maxlen) + sample_shape, value, dtype=dtype)
+    for idx, s in enumerate(sequences):
+        if not len(s):
+            continue  # empty list/array was found
+        trunc = s[:maxlen]
+        x[idx, :len(trunc)] = np.asarray(trunc, dtype=dtype)
+    return x
 
 
 def word2numpy(txt):
@@ -7,8 +27,8 @@ def word2numpy(txt):
 
 
 def wordlist2numpy(lines):
-    return utils.pad_sequences([word2numpy(line) for line in lines],
-                               maxlen=12, dtype=int, value=0)
+    return pad_sequences([word2numpy(line) for line in lines],
+                         maxlen=12, dtype=int, value=0)
 
 
 def numpy2word(input):
@@ -19,7 +39,7 @@ def numpy2wordlist(inputs):
     return [numpy2word(input) for input in inputs]
 
 
-RADICALS = ['.'] + list('אבגדהוזחטיכלמנסעפצקרשת') + ["ג'", "ז'", "צ'", 'שׂ']
+RADICALS = ['.'] + list('אבגדהוזחטיכלמנסעפצקרשת') + ["ג'", "ז'", "צ'", "שׂ"]
 
 BINYAN = 'פעל נפעל פיעל פועל הפעיל הופעל התפעל'.split()
 TENSE = 'עבר הווה עתיד ציווי'.split()
@@ -42,10 +62,14 @@ CLASSES = {
 
 
 def combined_shape(combination):
+    if isinstance(combination, str):
+        return (len(CLASSES[combination]),)
     return tuple(len(CLASSES[k]) for k in combination)
 
 
 def class_name(combination):
+    if isinstance(combination, str):
+        return combination
     return 'x'.join(combination)
 
 
