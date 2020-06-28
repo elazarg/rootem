@@ -2,7 +2,7 @@ import numpy as np
 import wandb
 import torch
 
-from encoding import class_size, class_name
+from encoding import class_size, class_name, combined_shape
 
 
 class Stats:
@@ -15,6 +15,7 @@ class Stats:
 
     def zero_run(self):
         self.running_corrects = {k: 0.0 for k in self.names}
+        self.init_unravelled()
         self.running_divisor = 0
         self.running_loss = []
         self.confusion = {k: np.zeros((class_size(k), class_size(k))) for k in self.names}
@@ -64,7 +65,7 @@ class Stats:
         wandb.log({
             'phase': self.phase,
             'epoch': self.epoch,
-            # 'batch': batch,
+            'batch': self.batch,
             f"{pref}/Loss": mean_loss,
             **{f"{pref}/Accuracy_{class_name(k)}": accuracies[k] for k in accuracies},
             **{f"{pref}/Confusion_{class_name(k)}": self.confusion[k] for k in self.confusion}
@@ -87,15 +88,31 @@ class Stats:
     def update(self, loss, batch_size, d):
         self.running_loss.append(loss)
         self.running_divisor += batch_size
-        for k, (output, labels) in d.items():
+        for combination, (output, labels) in d.items():
             preds = torch.argmax(output, dim=1)
-            self.running_corrects[k] += torch.sum(preds == labels)
+            self.running_corrects[combination] += torch.sum(preds == labels)
+
+            self.update_unravelled(combination, preds, labels)
 
             labels = labels.cpu().data.numpy()
             preds = preds.cpu().data.numpy()
             for l, p in zip(labels, preds):
-                self.confusion[k][l, p] += 1
+                self.confusion[combination][l, p] += 1
 
             softmax = torch.nn.functional.log_softmax(output, dim=1).cpu().data.numpy()
             for l, out in zip(labels, softmax):
-                self.confusion_logprobs[k][l, :] += out
+                self.confusion_logprobs[combination][l, :] += out
+
+    def update_unravelled(self, combination, preds, labels):
+        if isinstance(combination, (tuple, list)) and len(combination) > 1:
+            dims = combined_shape(combination)
+            preds = np.unravel_index(preds.cpu().data.numpy(), dims)
+            labels = np.unravel_index(labels.cpu().data.numpy(), dims)
+            for k, p, l in zip(combination, preds, labels):
+                self.running_corrects[k] += np.sum(p == l)
+
+    def init_unravelled(self):
+        for combination in self.names:
+            if isinstance(combination, (tuple, list)) and len(combination) > 1:
+                for k in combination:
+                    self.running_corrects[k] = 0.0
