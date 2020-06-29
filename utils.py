@@ -1,8 +1,13 @@
+from typing import Union, Dict, Iterable
+from contextlib import contextmanager
+
 import numpy as np
 import wandb
 import torch
+import itertools
+import more_itertools as mi
 
-from encoding import class_size, class_name, combined_shape
+from encoding import class_size, class_name, combined_shape, CLASSES
 
 
 class Stats:
@@ -21,11 +26,12 @@ class Stats:
         self.confusion = {k: np.zeros((class_size(k), class_size(k))) for k in self.names}
         self.confusion_logprobs = {k: np.zeros((class_size(k), class_size(k))) for k in self.names}
 
-    def assert_reasonable_initial(self, losses):
+    def assert_reasonable_initial(self, losses, criterion):
         if not self.initial_validated:
-            for k in losses:
-                expected_ce_losses = -np.log(1 / class_size(k))
-                assert abs(1 - losses[k] / expected_ce_losses) < 0.2
+            if isinstance(criterion, torch.nn.CrossEntropyLoss):
+                for k in losses:
+                    expected_ce_losses = -np.log(1 / class_size(k))
+                    assert abs(1 - losses[k] / expected_ce_losses) < 0.2
             self.initial_validated = True
 
     def epoch_start(self):
@@ -116,3 +122,69 @@ class Stats:
             if isinstance(combination, (tuple, list)) and len(combination) > 1:
                 for k in combination:
                     self.running_corrects[k] = 0.0
+
+
+def conditional_grad(condition):
+    if condition:
+        return no_op()
+    return torch.no_grad()
+
+
+@contextmanager
+def no_op():
+    yield
+
+
+def nonempty_powerset(seq):
+    return itertools.chain.from_iterable(itertools.combinations(seq, r) for r in range(1, len(seq)+1))
+
+
+def tensor_outer_product(a, b, c):
+    return torch.einsum('bi,bj,bk->bijk', a, b, c)
+
+
+def partitions():
+    return [[tuple(x) for x in part]
+            for part in mi.set_partitions(set(CLASSES) - {'R1', 'R2', 'R3', 'R4'})]
+
+
+def shuffle_in_unison(arrs):
+    rng_state = np.random.get_state()
+    for arr in arrs:
+        np.random.set_state(rng_state)
+        np.random.shuffle(arr)
+
+
+def batch(a, BATCH_SIZE):
+    ub = a.shape[0] // BATCH_SIZE * BATCH_SIZE
+    return torch.from_numpy(a[:ub]).to(torch.int64).split(BATCH_SIZE)
+
+
+def batch_all_ys(ys, BATCH_SIZE):
+    res = []
+    m = {k: batch(ys[k], BATCH_SIZE) for k in ys}
+    nbatches = len(next(iter(m.values())))
+    for i in range(nbatches):
+        res.append({k: m[k][i] for k in ys})
+    return res
+
+
+def batch_xy(data, BATCH_SIZE):
+    x, ys = data
+    return (batch(x, BATCH_SIZE), batch_all_ys(ys, BATCH_SIZE))
+
+
+Combination = Union[str, tuple, list]
+
+
+def conditional_ravel(ys: Dict[str, np.ndarray], combination: Combination) -> np.ndarray:
+    if isinstance(combination, str):
+        return ys[combination]
+    if len(combination) == 0:
+        return ys[combination[0]]
+    return np.ravel_multi_index([ys[k] for k in combination], combined_shape(combination))
+
+
+def ravel_multi_index(ys: Dict[str, np.ndarray], combinations: Iterable[Combination]) -> Dict[Combination, np.ndarray]:
+    return {combination: conditional_ravel(ys, combination)
+            for combination in combinations}

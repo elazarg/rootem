@@ -1,4 +1,5 @@
 import numpy as np
+import concrete
 
 
 def pad_sequences(sequences, maxlen, dtype, value) -> np.ndarray:
@@ -97,3 +98,20 @@ def list_of_lists_to_category(items):
     return { name: list_to_category(name, item)
              for name, item in zip(NAMES, items) }
 
+
+def load_dataset(file_pat):
+    *features_train, verbs_train = concrete.load_raw_dataset(f'{file_pat}_train.tsv')
+    *features_test, verbs_test = concrete.load_raw_dataset(f'{file_pat}_test.tsv')
+    return ((wordlist2numpy(verbs_train), list_of_lists_to_category(features_train)),
+            (wordlist2numpy(verbs_test) , list_of_lists_to_category(features_test )))
+
+
+def load_dataset_split(filename, split):
+    *features_train, verbs_train = concrete.load_raw_dataset(filename)
+    features_test = [t[-split:] for t in features_train]
+    verbs_test = verbs_train[-split:]
+    del verbs_train[-split:]
+    for t in features_train:
+        del t[-split:]
+    return ((wordlist2numpy(verbs_train), list_of_lists_to_category(features_train)),
+            (wordlist2numpy(verbs_test), list_of_lists_to_category(features_test)))

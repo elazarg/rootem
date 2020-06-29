@@ -133,7 +133,7 @@ def choose_random_words(num):
     return args
 
 
-def load_dataset(filename):
+def load_raw_dataset(filename):
     args = [[], [], [], [], [], [], [], [], [], []]
     with open(filename, encoding='utf-8') as f:
         for line in f:
