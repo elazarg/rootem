@@ -48,7 +48,9 @@ VOICE = 'ראשון שני שלישי'.split()
 GENDER = 'זכר נקבה'.split()
 PLURAL = 'יחיד רבים'.split()
 
-NAMES = ['B', 'T', 'V', 'G', 'P', 'R1', 'R2', 'R3', 'R4']
+NONROOTS = ['B', 'T', 'V', 'G', 'P']
+ROOTS = ['R1', 'R2', 'R3', 'R4']
+NAMES = NONROOTS + ROOTS
 CLASSES = {
     'B': BINYAN,
     'T': TENSE,
