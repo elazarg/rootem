@@ -88,4 +88,14 @@ def print_stats(filename):
     w = Counter(len(v) for v in model.values())
     for k, v in w.items():
         print(f'{k}\t{v}')
-    print(model['נאחז'])
+    for k in model:
+        if len(model[k]) > 30:
+            print(k, len(model[k]))
+            # print(k, len(model[k]))
+            # for v in model[k]:
+            #     print(', '.join(v.values()))
+            # print()
+
+
+if __name__ == '__main__':
+    print_stats('synthetic/all_combined.tsv')

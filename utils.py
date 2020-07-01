@@ -24,7 +24,6 @@ class Stats:
         self.running_divisor = 0
         self.running_loss = []
         self.confusion = {k: np.zeros((class_size(k), class_size(k))) for k in self.names}
-        self.confusion_logprobs = {k: np.zeros((class_size(k), class_size(k))) for k in self.names}
 
     def assert_reasonable_initial(self, losses, criterion):
         if not self.initial_validated:
@@ -85,9 +84,6 @@ class Stats:
         self.confusion = {k: v / self.running_divisor
                           for k, v in self.confusion.items()}
 
-        self.confusion_logprobs = {k: v / self.running_divisor
-                                   for k, v in self.confusion_logprobs.items()}
-
         self.cli(mean_loss, accuracies)
         self.wandb(mean_loss, accuracies)
 
@@ -104,10 +100,6 @@ class Stats:
             preds = preds.cpu().data.numpy()
             for l, p in zip(labels, preds):
                 self.confusion[combination][l, p] += 1
-
-            softmax = torch.nn.functional.log_softmax(output, dim=1).cpu().data.numpy()
-            for l, out in zip(labels, softmax):
-                self.confusion_logprobs[combination][l, :] += out
 
     def update_unravelled(self, combination, preds, labels):
         if isinstance(combination, (tuple, list)) and len(combination) > 1:
