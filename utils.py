@@ -15,6 +15,7 @@ class Stats:
         self.initial_validated = False
         self.names = list(names)
         self.running_corrects = {k: 0.0 for k in self.names}
+        self.running_corrects[('R1', 'R2', 'R4')] = 0.0
         self.init_unravelled()
         self.running_divisor = 0
         self.running_loss = []
@@ -46,6 +47,15 @@ class Stats:
             preds = preds.cpu().data.numpy()
             for l, p in zip(labels, preds):
                 self.confusion[combination][l, p] += 1
+
+        if ('R1', 'R2', 'R4') not in d:
+            out1, label1 = d['R1']
+            out2, label2 = d['R2']
+            out4, label4 = d['R4']
+            r1 = torch.argmax(out1, dim=1)
+            r2 = torch.argmax(out2, dim=1)
+            r4 = torch.argmax(out4, dim=1)
+            self.running_corrects[('R1', 'R2', 'R4')] += torch.sum((r1 == label1) & (r2 == label2) & (r4 == label4))
 
     def update_unravelled(self, combination, preds, labels):
         if isinstance(combination, (tuple, list)) and len(combination) > 1:
