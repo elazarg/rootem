@@ -49,13 +49,28 @@ class Stats:
                 self.confusion[combination][l, p] += 1
 
         if ('R1', 'R2', 'R4') not in d:
-            out1, label1 = d['R1']
-            out2, label2 = d['R2']
-            out4, label4 = d['R4']
-            r1 = torch.argmax(out1, dim=1)
-            r2 = torch.argmax(out2, dim=1)
-            r4 = torch.argmax(out4, dim=1)
-            self.running_corrects[('R1', 'R2', 'R4')] += torch.sum((r1 == label1) & (r2 == label2) & (r4 == label4))
+            if ('R1', 'R2') in d and 'R4' in d:
+                out12, label12 = d[('R1', 'R2')]
+                out4, label4 = d['R4']
+                r12 = torch.argmax(out12, dim=1)
+                r4 = torch.argmax(out4, dim=1)
+                self.running_corrects[('R1', 'R2', 'R4')] += torch.sum((r12 == label12) & (r4 == label4))
+            elif 'R1' in d and ('R2', 'R4') in d:
+                out1, label1 = d['R1']
+                out24, label24 = d[('R2', 'R4')]
+                r1 = torch.argmax(out1, dim=1)
+                r24 = torch.argmax(out24, dim=1)
+                self.running_corrects[('R1', 'R2', 'R4')] += torch.sum((r1 == label1) & (r24 == label24))
+            elif 'R1' in d and 'R2' in d and 'R4' in d:
+                out1, label1 = d['R1']
+                out2, label2 = d['R2']
+                out4, label4 = d['R4']
+                r1 = torch.argmax(out1, dim=1)
+                r2 = torch.argmax(out2, dim=1)
+                r4 = torch.argmax(out4, dim=1)
+                self.running_corrects[('R1', 'R2', 'R4')] += torch.sum((r1 == label1) & (r2 == label2) & (r4 == label4))
+            else:
+                pass
 
     def update_unravelled(self, combination, preds, labels):
         if isinstance(combination, (tuple, list)) and len(combination) > 1:
@@ -63,7 +78,8 @@ class Stats:
             preds = np.unravel_index(preds.cpu().data.numpy(), dims)
             labels = np.unravel_index(labels.cpu().data.numpy(), dims)
             for k, p, l in zip(combination, preds, labels):
-                self.running_corrects[k] += np.sum(p == l)
+                if k not in self.names:
+                    self.running_corrects[k] += np.sum(p == l)
 
     def init_unravelled(self):
         for combination in self.names:
