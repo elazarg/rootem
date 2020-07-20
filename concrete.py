@@ -23,25 +23,39 @@ SUFFIXES = ['', 'ו', 'מ', 'נ', 'ה', 'כ', 'נו', 'ני', 'הו', 'תנ', '�
 
 QUESTION_H = ['ה']
 
-ALL_PREFIXES = [""] + """
-ו
-וש
-כש
-וכש
-מכש
-ומכש
-שמכש
-ושמכש
-לכש
-שלכש
-ושלכש
-שכש
-ושכש
-מש
-ומש
-שמש
-ושמש
-""".strip().split()
+ALL_PREFIXES = {
+    '': 9774,
+    'ו': 727,
+    'ש': 1184,
+    'וש': 3,
+    'כש': 38,
+    'וכש': 2,
+    'מש': 2,
+    'ומש': 1,
+    'לכש': 0.1,
+    'ולכש': 0.1,
+    'שכש': 0.1,
+}
+# 'מכש':
+# 'ומכש'
+# 'שמכש'
+# 'ושמכש'
+# 'שלכש'
+# 'ושלכש'
+# 'ושכש'
+# 'שמש'
+# 'ושמש'
+# }
+
+
+def choose_random_prefix():
+    [prefix] = random.choices(list(ALL_PREFIXES.keys()), list(ALL_PREFIXES.values()))
+    return prefix
+
+
+def choose_random_suffix():
+    raise NotImplementedError
+
 
 
 def enumerate_possible_forms(verb):
@@ -78,7 +92,7 @@ def enumerate_possible_forms(verb):
 HEADER = ('שורש', "ו", "שימוש", "מילה", "סיומת", "בניין", "זמן", "גוף", "מין", "מספר")
 
 
-def generate_all_verbs(roots_submap, roots, SUF=False, PREF=False):
+def generate_all_verbs(roots_submap, roots, PREF=False, SUF=False):
     for root in roots:
         (radicals, tag) = roots_submap[root]
         # print(''.join(root), end='\r', flush=True)
@@ -87,17 +101,21 @@ def generate_all_verbs(roots_submap, roots, SUF=False, PREF=False):
             if not line.strip():
                 continue
             binyan, tense, body, gender, plurality, instance = line.strip().split()
-            prefixes = ALL_PREFIXES if PREF else ['']
-            for prefix in prefixes:
-                suffixes = ['']
-                if SUF and binyan in ['פעל', 'פיעל', 'הפעיל']:
-                    suffixes = SUFFIXES + QUESTION_H
-                for suffix in suffixes:
-                    # t_instance = stripped_instance(instance) if suffix else instance
-                    # verb = make_sofiot(prefix + t_instance + suffix)
-                    if len(radicals) == 3:
-                        radicals = radicals[:2] + ['.'] + [radicals[2]]
-                    yield (make_sofiot(instance), (binyan, tense, body, gender, plurality, *radicals))
+            prefix = ''
+            if PREF:
+                prefix = choose_random_prefix()
+
+            suffix = ''
+            if SUF and binyan in ['פעל', 'פיעל', 'הפעיל']:
+                suffix = choose_random_suffix()
+
+            t_instance = stripped_instance(instance) if suffix else instance
+            verb = make_sofiot(prefix + t_instance + suffix)
+
+            if len(radicals) == 3:
+                radicals = radicals[:2] + ['.'] + [radicals[2]]
+
+            yield (verb, (binyan, tense, body, gender, plurality, *radicals))
 
 
 def random_pref_suff(instance, binyan_for_suffix=None):

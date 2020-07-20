@@ -1,7 +1,6 @@
-from collections import defaultdict
-from dataclasses import dataclass
-from typing import List, Tuple
-from typing import NamedTuple
+from typing import NamedTuple, List, Tuple
+from collections import Counter
+import sys
 
 
 class Conllu(NamedTuple):
@@ -20,16 +19,6 @@ class Conllu(NamedTuple):
 
     def __str__(self):
         return ', '.join(f'{k}={v}' for k, v in self._asdict().items() if v != '_')
-
-
-def parse_govil(token):
-    return Conllu(*token[:6],
-                  lemma_academy=token[6],
-                  standard=token[7])
-
-
-def parse_opnlp(token):
-    return Conllu(*token)
 
 
 def expand_feats(token):
@@ -79,9 +68,8 @@ class Token(NamedTuple):
     id: str
     form: str
     det: bool
-    adp: List[str]  # ל, מ, ב, כ
+    adp_sconj: List[str]  # ל, מ, ב, כ, ש
     cconj: bool
-    sconj: List[dict]
     xpos: str
     feats: dict
     pron: dict
@@ -111,17 +99,15 @@ def merge(id, t: Conllu, subs: List[Conllu]):
     if subs:
         det = any(s.xpos == 'DET' for s in subs)
         cconj = any(s.xpos == 'CCONJ' for s in subs)
-        sconj = [s.feats for s in subs if s.xpos == 'SCONJ'] or [{}]
         [pron] = [s.feats for s in subs if s.xpos == 'PRON'] or [{}]
         [main] = [s for s in subs if s.xpos in ['NOUN', 'VERB', 'ADJ', 'PROPN']] or [None]
-        adp = [s.lemma for s in subs if s.xpos == 'ADP']
+        adp_sconj = [s.lemma for s in subs if s.xpos in ['ADP', 'SCONJ']]
         xpos = main.xpos if main else None
         feats = main.feats if main else '_'
     else:
         det = False
-        adp = []
+        adp_sconj = []
         cconj = False
-        sconj = []
         xpos = t.xpos
         feats = t.feats
         pron = {}
@@ -129,9 +115,8 @@ def merge(id, t: Conllu, subs: List[Conllu]):
         id=id,
         form=t.form,
         det=det,
-        adp=adp,
+        adp_sconj=adp_sconj,
         cconj=cconj,
-        sconj=sconj,
         xpos=xpos,
         feats=feats if feats != '_' else {},
         pron=pron
@@ -158,7 +143,17 @@ def parse_file(filename, parser):
         yield sentence_id, text, [merge(id, t, subs) for id, (t, subs) in enumerate(tokens)]
 
 
-def main_all():
+def parse_govil(token):
+    return Conllu(*token[:6],
+                  lemma_academy=token[6],
+                  standard=token[7])
+
+
+def parse_opnlp(token):
+    return Conllu(*token)
+
+
+def generate_verbsets():
     files = [
         ('mini_openlp.txt', parse_opnlp),
         ('mini_govil.txt', parse_govil),
@@ -180,64 +175,50 @@ def main_all():
                 print(file=outfile)
 
 
-class Token4(NamedTuple):
-    index: str
-    surface: str
-    pos: str
-    binyan: str
-    root: str
+openlp_files = [
+    '../Hebrew_UD/he_htb-ud-dev.conllu',
+    '../Hebrew_UD/he_htb-ud-train.conllu',
+    '../Hebrew_UD/he_htb-ud-test.conllu'
+]
 
 
-class Request(NamedTuple):
-    email: str
-    corpus: str
-    sent_id: str
-    content: Tuple[Token4, ...]
+def print_token_prefixes():
+    outfile = sys.stdout
+    stats = Counter()
+
+    for filename in openlp_files:
+        for sentence_id, text, sentence in parse_file(filename, parse_opnlp):
+            # print('# sent_id =', sentence_id, file=outfile)
+            # print('# text =', text, file=outfile)
+            for token in sentence:
+                # print(token, file=outfile)
+                binyan = token.feats.get('HebBinyan', '_')
+                if binyan != '_':
+                    if token.adp_sconj or token.cconj:
+                        p = ('ו' if token.cconj else '') + ''.join(token.adp_sconj)
+                        print(p, token.form, sep='\t', file=outfile)
+                        stats[p] += 1
+                    else:
+                        stats[''] += 1
+            # print(file=outfile)
+    total = sum(stats.values())
+    for k, v in sorted(stats.items(), key=lambda kv: kv[1]):
+        print(k, v)  #, v/total)
 
 
-def read_requests():
-    with open('rootem-data/requests.tsv', encoding='utf8') as f:
-        requests = f.read().split('\n\n')
-    for raw_request in requests:
-        raw_request = raw_request.strip()
-        if not raw_request:
-            continue
-        email, corpus, sent_id, *content = raw_request.split('\n')
+def count():
+    total = 0
+    for filename in openlp_files:
+        n = sum(1 for _ in parse_file(filename, parse_opnlp))
+        print(filename, n)
+        total += n
 
-        def make_token(line):
-            index, surface, pos, binyan, root = line.strip().split('\t')
-            if binyan != '_' and pos == '_':
-                pos = 'VERB'
-            if 'X' in root or 'x' in root:
-                pos = binyan = root = '_'
-            if root.endswith('ה'):
-                root = root[:-1] + 'י'
-            return Token4(index, surface, pos, binyan, root)
+    n = sum(1 for _ in parse_file('rootem-data/govil.txt', parse_govil))
+    print('govil', n)
+    total += n
 
-        yield Request(
-            email=email.split(' = ')[1].strip(),
-            corpus=corpus.split(' = ')[1].strip(),
-            sent_id=sent_id.split(' = ')[1].strip(),
-            content=tuple(make_token(line) for line in content)
-        )
-
-
-def collect_requests():
-    dd = defaultdict(set)
-    rs = list(read_requests())
-    for r in rs:
-        dd[r.sent_id].add(r)
-    c = 0
-    for k in dd:
-        if len(dd[k]) > 1:
-            c += 1
-            print(k)
-            for items in zip(*[x.content for x in dd[k]]):
-                if len(set(items)) > 1:
-                    print(items)
-            print()
-    print(c, len(dd), len(rs))
+    print('total', total)
 
 
 if __name__ == '__main__':
-    collect_requests()
+    count()
