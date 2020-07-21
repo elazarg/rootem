@@ -57,7 +57,6 @@ def choose_random_suffix():
     raise NotImplementedError
 
 
-
 def enumerate_possible_forms(verb):
     verb = normalize_sofiot(verb)
     roots_map = generate_table_for_root.load_roots_map('combined')

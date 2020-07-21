@@ -14,11 +14,36 @@ class Conllu(NamedTuple):
     deprel: str = '_'
     deps: str = '_'
     misc: str = '_'
-    lemma_academy: str = '_'
-    standard: str = '_'
+    lemma_academy: str = '_'  # unused
+    standard: str = '_'  # unused in openlp
+
+    def __repr__(self):
+        return ', '.join(f'{k}={v}' for k, v in self._asdict().items() if v != '_')
 
     def __str__(self):
-        return ', '.join(f'{k}={v}' for k, v in self._asdict().items() if v != '_')
+        return '\t'.join([
+            self.id,
+            self.form,
+            self.lemma,
+            self.upos,
+            self.xpos,
+            '|'.join(f'{k}={v}' for k, v in self.feats.items()) if self.feats != '_' else '_',
+            self.head,
+            self.deprel,
+            self.deps,
+            self.misc
+        ])
+
+
+class Token(NamedTuple):
+    id: str
+    form: str
+    det: bool
+    adp_sconj: List[str]  # ל, מ, ב, כ, ש
+    cconj: bool
+    xpos: str
+    feats: dict
+    pron: dict
 
 
 def expand_feats(token):
@@ -62,17 +87,6 @@ def group_tokens(tokens: List[Conllu]):
         res.append((token, subtokens))
         i += 1
     return res
-
-
-class Token(NamedTuple):
-    id: str
-    form: str
-    det: bool
-    adp_sconj: List[str]  # ל, מ, ב, כ, ש
-    cconj: bool
-    xpos: str
-    feats: dict
-    pron: dict
 
 
 def merge_consecutive(tokens: List[Tuple[Conllu, List[Conllu]]]):
@@ -134,11 +148,15 @@ def print_groups(tokens):
             print()
 
 
-def parse_file(filename, parser):
+def parse_conll_file(filename, parser):
     with open(filename, encoding='utf-8') as f:
         data = f.read().split('# sent_id')[1:]
     for block in data:
-        sentence_id, text, sentence = parse_conll_sentence(block, parser)
+        yield parse_conll_sentence(block, parser)
+
+
+def parse_file_merge(filename, parser):
+    for sentence_id, text, sentence in parse_conll_file(filename, parser):
         tokens = merge_consecutive(group_tokens(sentence))
         yield sentence_id, text, [merge(id, t, subs) for id, (t, subs) in enumerate(tokens)]
 
@@ -165,7 +183,7 @@ def generate_verbsets():
 
     for infilename, parser, outfilename in files[4:]:
         with open(outfilename, 'w', encoding='utf-8') as outfile:
-            for sentence_id, text, sentence in parse_file(infilename, parser):
+            for sentence_id, text, sentence in parse_file_merge(infilename, parser):
                 print('# sent_id =', sentence_id, file=outfile)
                 print('# text =', text, file=outfile)
                 for token in sentence:
@@ -187,7 +205,7 @@ def print_token_prefixes():
     stats = Counter()
 
     for filename in openlp_files:
-        for sentence_id, text, sentence in parse_file(filename, parse_opnlp):
+        for sentence_id, text, sentence in parse_file_merge(filename, parse_opnlp):
             # print('# sent_id =', sentence_id, file=outfile)
             # print('# text =', text, file=outfile)
             for token in sentence:
@@ -209,16 +227,12 @@ def print_token_prefixes():
 def count():
     total = 0
     for filename in openlp_files:
-        n = sum(1 for _ in parse_file(filename, parse_opnlp))
+        n = sum(1 for _ in parse_file_merge(filename, parse_opnlp))
         print(filename, n)
         total += n
 
-    n = sum(1 for _ in parse_file('rootem-data/govil.txt', parse_govil))
+    n = sum(1 for _ in parse_file_merge('rootem-data/govil.txt', parse_govil))
     print('govil', n)
     total += n
 
     print('total', total)
-
-
-if __name__ == '__main__':
-    count()

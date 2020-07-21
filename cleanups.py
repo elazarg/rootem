@@ -1,5 +1,9 @@
-from typing import NamedTuple, Tuple
-from collections import defaultdict
+from typing import NamedTuple, Tuple, Iterator
+from collections import defaultdict, Counter
+
+import ud
+from concrete import normalize_sofiot
+from root_verb_tables import generate_table_for_root
 
 
 class Token4(NamedTuple):
@@ -7,7 +11,7 @@ class Token4(NamedTuple):
     surface: str
     pos: str
     binyan: str
-    root: str
+    root: Tuple[str, ...]
 
 
 class Request(NamedTuple):
@@ -17,7 +21,18 @@ class Request(NamedTuple):
     content: Tuple[Token4, ...]
 
 
-def read_requests():
+def is_subsequence(sub, seq):
+    pos = 0
+    for ch in seq:
+        if pos < len(sub) and ch == sub[pos]:
+            pos += 1
+    return pos == len(sub)
+
+
+# roots_map = generate_table_for_root.load_roots_map('combined')
+
+
+def read_requests() -> Iterator[Request]:
     with open('rootem-data/requests.tsv', encoding='utf8') as f:
         requests = f.read().split('\n\n')
     for raw_request in requests:
@@ -28,12 +43,9 @@ def read_requests():
 
         def make_token(line):
             index, surface, pos, binyan, root = line.strip().split('\t')
-            if binyan != '_' and pos == '_':
-                pos = 'VERB'
-            if 'X' in root or 'x' in root:
-                pos = binyan = root = '_'
-            if root.endswith('ה'):
-                root = root[:-1] + 'י'
+            # root = tuple(root.split('.')) if root != '_' else ()
+            # if binyan != '_' and pos == '_':
+            #     pos = 'BEINONY'
             return Token4(index, surface, pos, binyan, root)
 
         yield Request(
@@ -42,6 +54,30 @@ def read_requests():
             sent_id=sent_id.split(' = ')[1].strip(),
             content=tuple(make_token(line) for line in content)
         )
+
+
+def arrange_requests():
+    corpora = defaultdict(list)
+    for r in read_requests():
+        corpora[r.corpus].append(r)
+    for corpus, v in corpora.items():
+        v.sort(key=lambda r: float(r.sent_id))
+        with open('requests/' + corpus, 'w', encoding='utf8') as f:
+            last = None
+            n = 0
+            for r in v:
+                if r == last:
+                    n += 1
+                    continue
+                if last and r.sent_id == last.sent_id:
+                    print(tuple([r.corpus, r.sent_id]), ',')
+                print(f'# email = {r.email}', file=f)
+                print(f'# sent_id = {r.sent_id}', file=f)
+                for c in r.content:
+                    print('\t'.join(c), file=f)
+                print(file=f)
+                last = r
+        # print(corpus, n)
 
 
 def collect_requests():
@@ -62,4 +98,10 @@ def collect_requests():
 
 
 if __name__ == '__main__':
-    collect_requests()
+    arrange_requests()
+    # for sent_id, text, sentence in ud.parse_conll_file('ud_examples/1.conllu', ud.parse_opnlp):
+    #     print(f'# sent_id = {sent_id}')
+    #     print(f'# text = {text}')
+    #     for t in sentence:
+    #         print(t)
+    #     print()
