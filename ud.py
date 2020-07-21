@@ -1,4 +1,4 @@
-from typing import NamedTuple, List, Tuple
+from typing import NamedTuple, List, Tuple, Iterator
 from collections import Counter
 import sys
 
@@ -35,6 +35,12 @@ class Conllu(NamedTuple):
         ])
 
 
+class Sentence(NamedTuple):
+    sent_id: str
+    text: str
+    tokens: Tuple[Conllu, ...]
+
+
 class Token(NamedTuple):
     id: str
     form: str
@@ -53,16 +59,18 @@ def expand_feats(token):
         token[5] = dict(feat.split('=')
                         for feat in token[5].split('|')
                         if feat)
+    else:
+        token[5] = {}
     return token
 
 
-def parse_conll_sentence(sentence: str, parser):
+def parse_conll_sentence(sentence: str, parser) -> Sentence:
     sentence = sentence.strip()
     sent_id, text, *tokens = sentence.split('\n')
     sent_id = sent_id.split()[-1]
     text = text.split(maxsplit=3)[-1]
     tokens = [parser(expand_feats(token.split('\t'))) for token in tokens]
-    return sent_id, text, tokens
+    return Sentence(sent_id, text, tuple(tokens))
 
 
 def next_after(id):
@@ -72,7 +80,7 @@ def next_after(id):
         return int(id) + 1
 
 
-def group_tokens(tokens: List[Conllu]):
+def group_tokens(tokens: Tuple[Conllu, ...]):
     res = []
     i = 0
     while i < len(tokens):
@@ -148,7 +156,7 @@ def print_groups(tokens):
             print()
 
 
-def parse_conll_file(filename, parser):
+def parse_conll_file(filename, parser) -> Iterator[Sentence]:
     with open(filename, encoding='utf-8') as f:
         data = f.read().split('# sent_id')[1:]
     for block in data:
@@ -156,9 +164,10 @@ def parse_conll_file(filename, parser):
 
 
 def parse_file_merge(filename, parser):
-    for sentence_id, text, sentence in parse_conll_file(filename, parser):
-        tokens = merge_consecutive(group_tokens(sentence))
-        yield sentence_id, text, [merge(id, t, subs) for id, (t, subs) in enumerate(tokens)]
+    for sentence in parse_conll_file(filename, parser):
+        tokens = merge_consecutive(group_tokens(sentence.tokens))
+        words = [merge(id, t, subs) for id, (t, subs) in enumerate(tokens)]
+        yield (sentence.sent_id, sentence.text, words)
 
 
 def parse_govil(token):
