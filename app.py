@@ -16,6 +16,13 @@ def utility_processor():
             'VERB': 'פועל',
             'AUX': 'פועל-עזר',
             '_': '',
+            'PAAL': 'פָּעַל',
+            'NIFAL': 'נִפְעַל',
+            'PIEL': 'פִּעֵל',
+            'PUAL': 'פֻּעַל',
+            'HIFIL': 'הִפְעִיל',
+            'HUFAL': 'הֻפְעַל',
+            'HITPAEL': 'הִתְפַּעֵל',
         }.get(w, w)
     binyanim = {
         'PAAL': 'פָּעַל',

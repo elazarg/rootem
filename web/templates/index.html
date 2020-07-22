@@ -16,7 +16,7 @@
         </tr>
       </thead>
       <tbody>
-      {% for id, word, pos, _ in lines %}
+      {% for id, word, pos, binyan in lines %}
         <tr>
             <td>{{ id }} <input class="tableInput" type="hidden" name="{{ id }}"/> </td>
             <td>{{ word }} <input class="tableInput" type="hidden" name="{{ id }}_word" value="{{ word }}"/>  </td>
@@ -40,9 +40,11 @@
             {% endif %}
                 <td>
                     <select class="{{class}} tableInput" name="{{ id }}_verb" {{required}}>
-                        <option></option>
-                        {% for binyan, heb_binyan in binyanim.items() %}
-                        <option value="{{ binyan }}">{{ heb_binyan }}</option>
+                        <option value="{{ binyan }}">{{ translate(binyan) }}</option>
+                        {% for binyan1, heb_binyan in binyanim.items() %}
+                            {%  if binyan != binyan1 %}
+                            <option value="{{ binyan1 }}">{{ heb_binyan }}</option>
+                            {% endif %}
                         {% endfor %}
                     </select>
                 </td>
