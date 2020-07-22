@@ -95,7 +95,7 @@ def jump(c):
 
 
 def incorporate():
-    misverbs = []
+    misverbs = set()
     sub = 'train'
     req = f'requests/verbs_openlp_{sub}.tsv'
     hebud = f'../Hebrew_UD/he_htb-ud-{sub}.conllu'
@@ -121,14 +121,14 @@ def incorporate():
 
             if c.xpos == 'VERB' and c.form not in ['שאין', 'אין', 'שיש', 'יש']:
                 if t.root == '_':
-                    misverbs.append(f'no root. {sent_id1}, {t.surface}: {t.binyan} {t.root}')
+                    misverbs.add(f'("{corpus}", {sent_id1}),')
                 binyan = c.feats.get('HebBinyan', '_')
                 if binyan == '_':
                     # misverbs.append(f'no binyan. {sent_id=}, {t.surface}: {t.binyan} {t.root}')
                     c.feats['HebBinyan'] = t.binyan
                 else:
                     if binyan != t.binyan:
-                        misverbs.append(f'{sent_id1} = {c.form}: {binyan} != {t.binyan} :{t.surface}')
+                        misverbs.add(f'({corpus}, {sent_id1}),')
                 c.feats['Root'] = t.root
 
             # print(c.form, t.surface, t.binyan, t.root)

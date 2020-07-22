@@ -182,22 +182,22 @@ def parse_opnlp(token):
 
 def generate_verbsets():
     files = [
-        ('mini_openlp.txt', parse_opnlp),
-        ('mini_govil.txt', parse_govil),
-        ('rootem-data/govil.txt', parse_govil, 'rootem-data/verbs_govil.tsv'),
+        # ('mini_openlp.txt', parse_opnlp),
+        # ('mini_govil.txt', parse_govil),
+        # ('rootem-data/govil.txt', parse_govil, 'rootem-data/verbs_govil.tsv'),
         ('../Hebrew_UD/he_htb-ud-dev.conllu', parse_opnlp, 'rootem-data/verbs_openlp_dev.tsv'),
         ('../Hebrew_UD/he_htb-ud-test.conllu', parse_opnlp, 'rootem-data/verbs_openlp_test.tsv'),
         ('../Hebrew_UD/he_htb-ud-train.conllu', parse_opnlp, 'rootem-data/verbs_openlp_train.tsv'),
     ]
 
-    for infilename, parser, outfilename in files[4:]:
+    for infilename, parser, outfilename in files:
         with open(outfilename, 'w', encoding='utf-8') as outfile:
             for sentence_id, text, sentence in parse_file_merge(infilename, parser):
                 print('# sent_id =', sentence_id, file=outfile)
                 print('# text =', text, file=outfile)
                 for token in sentence:
                     binyan = token.feats.get('HebBinyan', '_')
-                    verb = token.xpos if binyan != '_' else '_'
+                    verb = token.xpos if token.xpos in ['VERB'] else '_'
                     print(token.id, token.form, verb, binyan, sep='\t', file=outfile)
                 print(file=outfile)
 
@@ -245,3 +245,7 @@ def count():
     total += n
 
     print('total', total)
+
+
+if __name__ == '__main__':
+    generate_verbsets()
