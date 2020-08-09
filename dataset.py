@@ -6,10 +6,10 @@ import numpy as np
 
 class VerbToken(NamedTuple):
     id: int
-    form: str
+    # form: str
     pos: str
     binyan: str
-    # root: str
+    root: str
 
 
 def make_verbtoken(line):
@@ -33,9 +33,7 @@ def sentence_to_array(sentence: List[VerbToken]):
     return np.array([[ord(c) for c in x.form] for x in sentence])
 
 
-# corpus = load_verb_file('rootem-data/verbs_govil.tsv')
-
-if __name__ == '__main__':
+def run():
     with open('rootem-data/requests.tsv', encoding='utf-8') as f:
         items = defaultdict(set)
         for line in f:
@@ -61,3 +59,9 @@ if __name__ == '__main__':
         #     if len(values) > 1:
         #         for binyan, root in values:
         #             print(word, binyan, root)
+
+# corpus = load_verb_file('rootem-data/verbs_govil.tsv')
+
+
+if __name__ == '__main__':
+    run()

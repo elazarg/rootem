@@ -44,9 +44,9 @@ RADICALS = ['.'] + list('אבגדהוזחטיכלמנסעפצקרשת') + ["ג'"
 
 BINYAN = 'פעל נפעל פיעל פועל הפעיל הופעל התפעל'.split()
 TENSE = 'עבר הווה עתיד ציווי'.split()
-VOICE = 'ראשון שני שלישי'.split()
-GENDER = 'זכר נקבה'.split()
-PLURAL = 'יחיד רבים'.split()
+VOICE = 'ראשון שני שלישי הכל _'.split()
+GENDER = 'זכר נקבה סתמי _'.split()
+PLURAL = 'יחיד רבים _'.split()
 
 NONROOTS = ['B', 'T', 'V', 'G', 'P']
 ROOTS = ['R1', 'R2', 'R3', 'R4']

@@ -93,18 +93,27 @@ def jump(c):
         return int(j) - int(i) + 2
     return 1
 
+binyanim = {
+    'PAAL': 'פָּעַל',
+    'NIFAL': 'נִפְעַל',
+    'PIEL': 'פִּעֵל',
+    'PUAL': 'פֻּעַל',
+    'HIFIL': 'הִפְעִיל',
+    'HUFAL': 'הֻפְעַל',
+    'HITPAEL': 'הִתְפַּעֵל',
+    '_': '_',
+}
 
-def incorporate():
-    misverbs = set()
-    sub = 'train'
-    req = f'requests/verbs_openlp_{sub}.tsv'
-    hebud = f'../Hebrew_UD/he_htb-ud-{sub}.conllu'
+
+def incorporate(req, hebud):
     for (email, corpus, sent_id1, tokens), (sent_id2, text, sentence) in zip(read_requests(req), ud.parse_conll_file(hebud, ud.parse_opnlp)):
         ci = 0
         for t in tokens:
             after = ci
             while 'SpaceAfter=No' in sentence[after].misc:
                 after += jump(sentence[after])
+                if sentence[ci].xpos == 'PUNCT':
+                    ci = after
             after += jump(sentence[after])
 
             c = sentence[ci]
@@ -120,32 +129,43 @@ def incorporate():
                 c = sentence[ci]
 
             if c.xpos == 'VERB' and c.form not in ['שאין', 'אין', 'שיש', 'יש']:
-                if t.root == '_':
-                    misverbs.add(f'("{corpus}", {sent_id1}),')
                 binyan = c.feats.get('HebBinyan', '_')
+                if t.root == '_':
+                    print('משפט', sent_id1, ':', text)
+                    print('אין שורש עבור המילה', repr(t.surface), end=' ')
+                    if binyan != '_':
+                        print('בבניין', binyanim[binyan], end='')
+                    print()
+                    print()
                 if binyan == '_':
-                    # misverbs.append(f'no binyan. {sent_id=}, {t.surface}: {t.binyan} {t.root}')
+                    # print(f'no binyan. {sent_id1=}, {t.surface}: {t.binyan} {t.root}')
                     c.feats['HebBinyan'] = t.binyan
                 else:
                     if binyan != t.binyan:
-                        misverbs.add(f'({corpus}, {sent_id1}),')
+                        # {}: עבור המילה {t.surface}: {binyan} {t.binyan} {t.root}
+                        print('משפט', sent_id1, ':', text)
+                        if t.binyan != '_':
+                            print('בנין שונה: עבור המילה', t.surface, 'במקום', binyanim[binyan], 'הצעת', binyanim[t.binyan], 'עם שורש', t.root)
+                        else:
+                            print('לא פועל: נראה שהמילה', repr(t.surface), 'איננה פועל')
+                        print()
+
                 c.feats['Root'] = t.root
 
             # print(c.form, t.surface, t.binyan, t.root)
 
             ci = after
+        yield ud.Sentence(sent_id1, text, sentence)
 
-        print(f'# sent_id = {sent_id1}')
-        print(f'# text = {text}')
-        for t in sentence:
-            print(t)
-        print()
 
-    for k in misverbs:
-        print(k)
-    print(len(misverbs))
+def incorporate_and_save(sub):
+    with open(f'ud_updated/he_htb-ud-{sub}.conllu', 'w', encoding='utf8') as f:
+        for s in incorporate(f'requests/verbs_openlp_{sub}.tsv', f'../Hebrew_UD/he_htb-ud-{sub}.conllu'):
+            print(s, file=f)
+            print(file=f)
 
 
 if __name__ == '__main__':
     arrange_requests()
-    incorporate()
+    for part in ['dev', 'test', 'train']:
+        incorporate_and_save(part)
