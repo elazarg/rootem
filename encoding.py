@@ -125,37 +125,37 @@ def load_dataset_split(filename, split):
 
 
 class Classes:
-    det = ['False', 'True']
-    adp_sconj = [['_', 'ב'], ['_', 'ל'], ['_'], ['ב', 'ב'], ['ב', 'כ'], ['ב', 'ל'], ['ב'], ['ה'], ['כ', '_'], ['כ', 'ב'], ['כ'], ['כש', 'ב'], ['כש', 'ל'], ['כש'], ['ל'], ['לכעין', 'כ'], ['מ', '_'], ['מ', 'ב'], ['מ'], ['מש'], ['עד', '_'], ['על'], ['ש', 'ב'], ['ש', 'כ'], ['ש', 'ל'], ['ש', 'מ'], ['ש'], []]
-    cconj = ['False', 'True']
+    det = ['_', 'False', 'True']
+    adp_sconj = [['_', 'ב'], ['_', 'ל'], ['_'], ['ב', 'ב'], ['ב', 'כ'], ['ב', 'ל'], ['ב'], ['ה'], ['כ', '_'], ['כ', 'ב'], ['כ'], ['כש', 'ב'], ['כש', 'ל'], ['כש'], ['ל'], ['ל', 'כ'], ['מ', '_'], ['מ', 'ב'], ['מ'], ['מש'], ['עד', '_'], ['על'], ['ש', 'ב'], ['ש', 'כ'], ['ש', 'ל'], ['ש', 'מ'], ['ש'], []]
+    cconj = ['_', 'False', 'True']
     xpos = ['_', 'ADJ', 'ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'INTJ', 'NOUN', 'NUM', 'PRON', 'PROPN', 'PUNCT', 'SCONJ', 'VERB', 'X']
     adp_pron = [['את', 'הם'], ['את', 'ו'], ['ה'], ['הם'], ['הן'], ['ו'], ['של', 'את'], ['של', 'אתה'], ['של', 'ה'], ['של', 'הם'], ['של', 'הן'], ['של', 'ו'], ['של', 'י'], ['של', 'כם'], ['של', 'נו'], []]
-    Case = ['Acc', 'Gen', 'Tem', '_']
-    HebExistential = ['True', '_']
-    Voice = ['Act', 'Mid', 'Pass', '_']
-    VerbForm = ['Inf', 'Part', '_']
-    Prefix = ['Yes', '_']
-    Polarity = ['Neg', 'Pos', '_']
-    Xtra = ['Junk', '_']
-    Definite = ['Cons', 'Def', '_']
-    VerbType = ['Cop', 'Mod', '_']
-    PronType = ['Art', 'Dem', 'Emp', 'Ind', 'Int', 'Prs', '_']
-    Number = ['Dual', 'Dual,Plur', 'Plur', 'Plur,Sing', 'Sing', '_']
-    Reflex = ['Yes', '_']
-    Mood = ['Imp', '_']
-    HebSource = ['ConvUncertainHead', 'ConvUncertainLabel', '_']
-    Gender = ['Fem', 'Fem,Masc', 'Masc', '_']
-    Tense = ['Fut', 'Past', '_']
-    Abbr = ['Yes', '_']
-    Person = ['1', '1,2,3', '2', '3', '_']
-    HebBinyan = ['HIFIL', 'HITPAEL', 'HUFAL', 'NIFAL', 'PAAL', 'PIEL', 'PUAL', '_']
-    PronGender = ['Fem', 'Fem,Masc', 'Masc', '_']
-    PronNumber = ['Plur', 'Plur,Sing', 'Sing', '_']
-    PronPerson = ['1', '2', '3', '_']
+    Case = ['_', 'Acc', 'Gen', 'Tem']
+    HebExistential = ['_', 'True']
+    Voice = ['_', 'Act', 'Mid', 'Pass']
+    VerbForm = ['_', 'Inf', 'Part']
+    Prefix = ['_', 'Yes']
+    Polarity = ['_', 'Neg', 'Pos']
+    Xtra = ['_', 'Junk']
+    Definite = ['_', 'Cons', 'Def']
+    VerbType = ['_', 'Cop', 'Mod']
+    PronType = ['_', 'Art', 'Dem', 'Emp', 'Ind', 'Int', 'Prs']
+    Number = ['_', 'Dual', 'Dual,Plur', 'Plur', 'Plur,Sing', 'Sing']
+    Reflex = ['_', 'Yes']
+    Mood = ['_', 'Imp']
+    HebSource = ['_', 'ConvUncertainHead', 'ConvUncertainLabel']
+    Gender = ['_', 'Fem', 'Fem,Masc', 'Masc']
+    Tense = ['_', 'Fut', 'Past']
+    Abbr = ['_', 'Yes']
+    Person = ['_', '1', '1,2,3', '2', '3']
+    HebBinyan = ['_', 'HIFIL', 'HITPAEL', 'HUFAL', 'NIFAL', 'PAAL', 'PIEL', 'PUAL']
+    PronGender = ['_', 'Fem', 'Fem,Masc', 'Masc']
+    PronNumber = ['_', 'Plur', 'Plur,Sing', 'Sing']
+    PronPerson = ['_', '1', '2', '3']
 
 
 def features(w, word_maxlen):
-    a1 = a2 = a3 = a4 = '.'
+    a1 = a2 = a3 = a4 = '_'
     if w.Root != '_':
         a1, a2, *a3, a4 = w.Root.split('.')
         a3 = a3[0] if a3 else '.'
