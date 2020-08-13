@@ -1,5 +1,6 @@
 from typing import Union, Dict, Iterable
 from contextlib import contextmanager
+from collections import defaultdict
 
 import numpy as np
 import wandb
@@ -10,12 +11,22 @@ import more_itertools as mi
 from encoding import class_size, class_name, combined_shape, CLASSES
 
 
+def first(iterable):
+    return next(iter(iterable))
+
+
+def combine_radicals(outputs, labels, names):
+    res = torch.ones_like(first(labels.values()), dtype=torch.bool)
+    for name in names:
+        res &= outputs[name].argmax(dim=1) == labels[name]
+    return res.sum()
+
+
 class Stats:
     def __init__(self, names):
         self.initial_validated = False
         self.names = list(names)
-        self.running_corrects = {k: 0.0 for k in self.names}
-        self.running_corrects[('R1', 'R2', 'R4')] = 0.0
+        self.running_corrects = defaultdict(float)
         self.init_unravelled()
         self.running_divisor = 0
         self.running_loss = []
@@ -34,41 +45,31 @@ class Stats:
             **{f"Confusion_{class_name(k)}": confusion[k] for k in confusion}
         }
 
-    def update(self, loss, batch_size, d):
+    def update(self, loss, batch_size, outputs, labels):
         self.running_loss.append(loss)
         self.running_divisor += batch_size
-        for combination, (output, labels) in d.items():
-            preds = torch.argmax(output, dim=1)
-            self.running_corrects[combination] += torch.sum(preds == labels)
+        for combination in outputs.keys():
+            output = outputs[combination]
+            label = labels[combination]
+            pred = torch.argmax(output, dim=1)
+            self.running_corrects[combination] += (pred == label).sum()
 
-            self.update_unravelled(combination, preds, labels)
+            self.update_unravelled(combination, pred, label)
 
-            labels = labels.cpu().data.numpy()
-            preds = preds.cpu().data.numpy()
-            for l, p in zip(labels, preds):
+            label = label.cpu().data.numpy()
+            pred = pred.cpu().data.numpy()
+            for l, p in zip(label, pred):
                 self.confusion[combination][l, p] += 1
 
-        if ('R1', 'R2', 'R4') not in d:
-            if ('R1', 'R2') in d and 'R4' in d:
-                out12, label12 = d[('R1', 'R2')]
-                out4, label4 = d['R4']
-                r12 = torch.argmax(out12, dim=1)
-                r4 = torch.argmax(out4, dim=1)
-                self.running_corrects[('R1', 'R2', 'R4')] += torch.sum((r12 == label12) & (r4 == label4))
-            elif 'R1' in d and ('R2', 'R4') in d:
-                out1, label1 = d['R1']
-                out24, label24 = d[('R2', 'R4')]
-                r1 = torch.argmax(out1, dim=1)
-                r24 = torch.argmax(out24, dim=1)
-                self.running_corrects[('R1', 'R2', 'R4')] += torch.sum((r1 == label1) & (r24 == label24))
-            elif 'R1' in d and 'R2' in d and 'R4' in d:
-                out1, label1 = d['R1']
-                out2, label2 = d['R2']
-                out4, label4 = d['R4']
-                r1 = torch.argmax(out1, dim=1)
-                r2 = torch.argmax(out2, dim=1)
-                r4 = torch.argmax(out4, dim=1)
-                self.running_corrects[('R1', 'R2', 'R4')] += torch.sum((r1 == label1) & (r2 == label2) & (r4 == label4))
+        if ('R1', 'R2', 'R3', 'R4') not in outputs:
+            if all(r in outputs for r in ('R1', 'R2', 'R3', 'R4')):
+                self.running_corrects[('R1', 'R2', 'R3', 'R4')] += combine_radicals(outputs, labels, ('R1', 'R2', 'R3', 'R4'))
+            elif ('R1', 'R2') in outputs and 'R4' in outputs:
+                self.running_corrects[('R1', 'R2', 'R4')] += combine_radicals(outputs, labels, (('R1', 'R2'), 'R4'))
+            elif 'R1' in outputs and ('R2', 'R4') in outputs:
+                self.running_corrects[('R1', 'R2', 'R4')] += combine_radicals(outputs, labels, ('R1', ('R2', 'R4')))
+            elif all(r in outputs for r in ('R1', 'R2', 'R4')):
+                self.running_corrects[('R1', 'R2', 'R4')] += combine_radicals(outputs, labels, ('R1', 'R2', 'R4'))
             else:
                 pass
 

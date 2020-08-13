@@ -1,3 +1,4 @@
+import string
 from typing import NamedTuple, List, Tuple, Iterator
 from collections import Counter
 import sys
@@ -22,16 +23,16 @@ class Conllu(NamedTuple):
 
     def __str__(self):
         return '\t'.join([
-            self.id,
-            self.form,
-            self.lemma,
-            self.upos,
-            self.xpos,
-            '|'.join(f'{k}={v}' for k, v in self.feats.items()) if self.feats != '_' else '_',
-            self.head,
-            self.deprel,
-            self.deps,
-            self.misc
+            self.id or '_',
+            self.form or '_',
+            self.lemma or '_',
+            self.upos or '_',
+            self.xpos or '_',
+            '|'.join(f'{k}={v}' for k, v in sorted(self.feats.items())) or '_',
+            self.head or '_',
+            self.deprel or '_',
+            self.deps or '_',
+            self.misc or '_'
         ])
 
 
@@ -40,16 +41,59 @@ class Sentence(NamedTuple):
     text: str
     tokens: Tuple[Conllu, ...]
 
+    def __str__(self):
+        return '\n'.join([
+            f'# sent_id = {self.sent_id}',
+            f'# text = {self.text}',
+            *[str(x) for x in self.tokens]
+        ])
+
 
 class Token(NamedTuple):
     id: str
     form: str
+    lemma: str
     det: bool
     adp_sconj: List[str]  # ל, מ, ב, כ, ש
     cconj: bool
     xpos: str
-    feats: dict
-    pron: dict
+    adp_pron: List[str]  # של, הם, ו
+    Case: str = '_'
+    HebExistential: str = '_'
+    Voice: str = '_'
+    VerbForm: str = '_'
+    Prefix: str = '_'
+    Polarity: str = '_'
+    Xtra: str = '_'
+    Definite: str = '_'
+    VerbType: str = '_'
+    PronType: str = '_'
+    Number: str = '_'
+    Reflex: str = '_'
+    Mood: str = '_'
+    HebSource: str = '_'
+    Gender: str = '_'
+    Tense: str = '_'
+    Abbr: str = '_'
+    Person: str = '_'
+    HebBinyan: str = '_'
+    Root: str = '_'
+    PronGender: str = '_'
+    PronNumber: str = '_'
+    PronPerson: str = '_'
+
+    def __str__(self):
+        return '\t'.join([
+            self.id or '_',
+            self.form or '_',
+            self.lemma,
+            'ה' if self.det else '_',
+            ''.join(self.adp_sconj) or '_',
+            'ו' if self.cconj else '_',
+            self.xpos or '_',
+            ''.join(self.adp_pron) or '_',
+            *self[8:]
+        ])
 
 
 def expand_feats(token):
@@ -117,31 +161,45 @@ def merge_consecutive(tokens: List[Tuple[Conllu, List[Conllu]]]):
         collect = []
 
 
-def merge(id, t: Conllu, subs: List[Conllu]):
+def merge(id: str, t: Conllu, subs: List[Conllu]):
+    det = False
+    adp_sconj = []
+    adp_pron = []
+    cconj = False
+    xpos = t.xpos
+    feats = t.feats
+    pron = {}
+    lemma = t.form.strip(string.punctuation)
     if subs:
         det = any(s.xpos == 'DET' for s in subs)
         cconj = any(s.xpos == 'CCONJ' for s in subs)
         [pron] = [s.feats for s in subs if s.xpos == 'PRON'] or [{}]
-        [main] = [s for s in subs if s.xpos in ['NOUN', 'VERB', 'ADJ', 'PROPN']] or [None]
-        adp_sconj = [s.lemma for s in subs if s.xpos in ['ADP', 'SCONJ']]
+        [(k, main)] = [(i, s) for (i, s) in enumerate(subs) if s.xpos in ['NOUN', 'VERB', 'ADJ', 'PROPN']] or [(None, None)]
+        if k:
+            lemma = main.lemma.strip(string.punctuation)
+            adp_sconj = [s.lemma for s in subs[:k] if s.xpos in ['ADP', 'SCONJ']]
+            adp_pron = [s.form.replace('_', '')
+                              .replace('הוא', 'ו')
+                              .replace('היא', 'ה')
+                              .replace('אני', 'י')
+                              .replace('אנחנו', 'נו')
+                              .replace('אתם', 'כם')
+                        for s in subs[k+1:] if s.xpos in ['ADP', 'PRON']]
         xpos = main.xpos if main else None
         feats = main.feats if main else '_'
-    else:
-        det = False
-        adp_sconj = []
-        cconj = False
-        xpos = t.xpos
-        feats = t.feats
-        pron = {}
     return Token(
         id=id,
         form=t.form,
+        lemma=lemma,
         det=det,
         adp_sconj=adp_sconj,
         cconj=cconj,
         xpos=xpos,
-        feats=feats if feats != '_' else {},
-        pron=pron
+        adp_pron=adp_pron,
+        **(feats if feats != '_' else {}),
+        PronGender=pron.get('Gender', '_'),
+        PronNumber=pron.get('Number', '_'),
+        PronPerson=pron.get('Person', '_'),
     )
 
 
@@ -152,7 +210,7 @@ def print_groups(tokens):
             print(t)
             for sub in subs:
                 print(sub)
-            print(merge(id, t, subs))
+            print(merge(str(id), t, subs))
             print()
 
 
@@ -166,7 +224,7 @@ def parse_conll_file(filename, parser) -> Iterator[Sentence]:
 def parse_file_merge(filename, parser):
     for sentence in parse_conll_file(filename, parser):
         tokens = merge_consecutive(group_tokens(sentence.tokens))
-        words = [merge(id, t, subs) for id, (t, subs) in enumerate(tokens)]
+        words = [merge(str(id), t, subs) for id, (t, subs) in enumerate(tokens)]
         yield (sentence.sent_id, sentence.text, words)
 
 
@@ -196,9 +254,8 @@ def generate_verbsets():
                 print('# sent_id =', sentence_id, file=outfile)
                 print('# text =', text, file=outfile)
                 for token in sentence:
-                    binyan = token.feats.get('HebBinyan', '_')
                     verb = token.xpos if token.xpos in ['VERB'] else '_'
-                    print(token.id, token.form, verb, binyan, sep='\t', file=outfile)
+                    print(token.id, token.form, verb, token.HebBinyan, sep='\t', file=outfile)
                 print(file=outfile)
 
 
@@ -219,8 +276,7 @@ def print_token_prefixes():
             # print('# text =', text, file=outfile)
             for token in sentence:
                 # print(token, file=outfile)
-                binyan = token.feats.get('HebBinyan', '_')
-                if binyan != '_':
+                if token.HebBinyan != '_':
                     if token.adp_sconj or token.cconj:
                         p = ('ו' if token.cconj else '') + ''.join(token.adp_sconj)
                         print(p, token.form, sep='\t', file=outfile)
@@ -247,5 +303,56 @@ def count():
     print('total', total)
 
 
+def extract_noncontext():
+    translate = {
+        'Sing': 'יחיד',
+        'Plur': 'רבים',
+        'Dual,Plur': 'זוג,רבים',
+        'Plur,Sing': 'הכל',
+        'Dual': 'זוג',
+        'Masc': 'זכר',
+        'Fem': 'נקבה',
+        'Fem,Masc': 'סתמי',
+        'Past': 'עבר',
+        'Fut': 'עתיד',
+        'PAAL': 'פעל',
+        'NIFAL': 'נפעל',
+        'PIEL': 'פיעל',
+        'PUAL': 'פועל',
+        'HIFIL': 'הפעיל',
+        'HUFAL': 'הופעל',
+        'HITPAEL': 'התפעל',
+        '1': 'ראשון',
+        '2': 'שני',
+        '3': 'שלישי',
+        '1,2,3': 'הכל',
+    }
+    for part in ['dev', 'test', 'train']:
+        with open(f'ud/nocontext-{part}.tsv', 'w', encoding='utf8') as f:
+            for id, text, words in parse_file_merge(f'../Hebrew_UD/he_htb-ud-{part}.conllu', parse_opnlp):
+                for w in words:
+                    if w.HebBinyan != '_' and w.Root != '_':
+                        root = w.Root.split('.')
+                        if len(root) == 3:
+                            root = root[:2] + ['.'] + root[-1:]
+                        number = translate.get(w.Number)
+                        gender = translate.get(w.Gender)
+                        person = translate.get(w.Person)
+                        tense = translate.get(w.Tense) if w.Tense else 'הווה'
+                        binyan = translate.get(w.HebBinyan)
+                        print(binyan, tense, person, gender, number, *root, w.form, sep='\t', file=f)
+
+
+def extract_withcontext():
+    for part in ['dev', 'test', 'train']:
+        with open(f'ud/contextual-{part}.tsv', 'w', encoding='utf8') as f:
+            for id, text, words in parse_file_merge(f'../Hebrew_UD/he_htb-ud-{part}.conllu', parse_opnlp):
+                print('sent_id:', id, file=f)
+                print('text:', text, file=f)
+                for w in words:
+                    print(w, file=f)
+                print(file=f)
+
+
 if __name__ == '__main__':
-    generate_verbsets()
+    extract_withcontext()

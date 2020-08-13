@@ -1,8 +1,9 @@
 import numpy as np
 import concrete
+import ud
 
 
-def pad_sequences(sequences, maxlen, dtype, value) -> np.ndarray:
+def pad_sequences(sequences, maxlen, dtype=int, value=0) -> np.ndarray:
     # based on keras' pad_sequences()
     num_samples = len(sequences)
 
@@ -23,8 +24,12 @@ def pad_sequences(sequences, maxlen, dtype, value) -> np.ndarray:
     return x
 
 
-def word2numpy(txt):
-    return np.array([ord(c) for c in txt])
+def word2numpy(txt, pad=None):
+    ords = [ord(c) for c in txt]
+    if pad is not None:
+        ords.extend([0] * (pad - len(ords)))
+        del ords[pad:]
+    return np.array(ords)
 
 
 def wordlist2numpy(lines):
@@ -97,8 +102,8 @@ def list_from_category(name, indexes):
 
 
 def list_of_lists_to_category(items):
-    return { name: list_to_category(name, item)
-             for name, item in zip(NAMES, items) }
+    return {name: list_to_category(name, item)
+            for name, item in zip(NAMES, items)}
 
 
 def load_dataset(file_pat):
@@ -117,3 +122,78 @@ def load_dataset_split(filename, split):
         del t[-split:]
     return ((wordlist2numpy(verbs_train), list_of_lists_to_category(features_train)),
             (wordlist2numpy(verbs_test), list_of_lists_to_category(features_test)))
+
+
+class Classes:
+    det = ['False', 'True']
+    adp_sconj = [['_', 'ב'], ['_', 'ל'], ['_'], ['ב', 'ב'], ['ב', 'כ'], ['ב', 'ל'], ['ב'], ['ה'], ['כ', '_'], ['כ', 'ב'], ['כ'], ['כש', 'ב'], ['כש', 'ל'], ['כש'], ['ל'], ['לכעין', 'כ'], ['מ', '_'], ['מ', 'ב'], ['מ'], ['מש'], ['עד', '_'], ['על'], ['ש', 'ב'], ['ש', 'כ'], ['ש', 'ל'], ['ש', 'מ'], ['ש'], []]
+    cconj = ['False', 'True']
+    xpos = ['_', 'ADJ', 'ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'INTJ', 'NOUN', 'NUM', 'PRON', 'PROPN', 'PUNCT', 'SCONJ', 'VERB', 'X']
+    adp_pron = [['את', 'הם'], ['את', 'ו'], ['ה'], ['הם'], ['הן'], ['ו'], ['של', 'את'], ['של', 'אתה'], ['של', 'ה'], ['של', 'הם'], ['של', 'הן'], ['של', 'ו'], ['של', 'י'], ['של', 'כם'], ['של', 'נו'], []]
+    Case = ['Acc', 'Gen', 'Tem', '_']
+    HebExistential = ['True', '_']
+    Voice = ['Act', 'Mid', 'Pass', '_']
+    VerbForm = ['Inf', 'Part', '_']
+    Prefix = ['Yes', '_']
+    Polarity = ['Neg', 'Pos', '_']
+    Xtra = ['Junk', '_']
+    Definite = ['Cons', 'Def', '_']
+    VerbType = ['Cop', 'Mod', '_']
+    PronType = ['Art', 'Dem', 'Emp', 'Ind', 'Int', 'Prs', '_']
+    Number = ['Dual', 'Dual,Plur', 'Plur', 'Plur,Sing', 'Sing', '_']
+    Reflex = ['Yes', '_']
+    Mood = ['Imp', '_']
+    HebSource = ['ConvUncertainHead', 'ConvUncertainLabel', '_']
+    Gender = ['Fem', 'Fem,Masc', 'Masc', '_']
+    Tense = ['Fut', 'Past', '_']
+    Abbr = ['Yes', '_']
+    Person = ['1', '1,2,3', '2', '3', '_']
+    HebBinyan = ['HIFIL', 'HITPAEL', 'HUFAL', 'NIFAL', 'PAAL', 'PIEL', 'PUAL', '_']
+    PronGender = ['Fem', 'Fem,Masc', 'Masc', '_']
+    PronNumber = ['Plur', 'Plur,Sing', 'Sing', '_']
+    PronPerson = ['1', '2', '3', '_']
+
+
+def features(w, word_maxlen):
+    a1 = a2 = a3 = a4 = '.'
+    if w.Root != '_':
+        a1, a2, *a3, a4 = w.Root.split('.')
+        a3 = a3[0] if a3 else '.'
+    return (
+        word2numpy(w.form, pad=word_maxlen),
+        Classes.xpos.index(w.xpos or '_'),
+        Classes.HebBinyan.index(w.HebBinyan or '_'),
+        to_category('R1', a1),
+        to_category('R2', a2),
+        to_category('R3', a3),
+        to_category('R4', a4),
+    )
+
+
+def transpose(list_of_lists):
+    return list(zip(*list_of_lists))
+
+
+def load_sentences_split(conllu_filename, split, sentence_maxlen=30, word_maxlen=11):
+    data = [
+        transpose([features(w, word_maxlen) for w in words])
+        for id, text, words in ud.parse_file_merge(conllu_filename, ud.parse_opnlp)
+    ]
+    x_train, *ys_train = [pad_sequences([row[i] for row in data], sentence_maxlen)
+                          for i in range(7)]
+    ys_train = np.array(ys_train)
+
+    ys_test, ys_train = ys_train[:, :split, :], ys_train[:, split:, :]
+    x_test, x_train, = x_train[:split, :, :],  x_train[split:, :, :]
+
+    # x_train: (NSAMPLES, SENT_MAXLEN, WORD_MAXLEN)
+    # ys_train: (NFEATURES, NSAMPLES, SENT_MAXLEN)
+    return ((x_train, ys_train),
+            (x_test, ys_test))
+
+
+if __name__ == '__main__':
+    ((x_train, ys_train), (x_test, ys_test)) = load_sentences_split(f'../Hebrew_UD/he_htb-ud-train.conllu', 100, 11, 30)
+    print(x_train.shape, x_test.shape)
+    print(ys_train.shape, ys_test.shape)
+    # print(data)
