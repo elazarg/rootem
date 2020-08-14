@@ -45,13 +45,13 @@ def numpy2wordlist(inputs):
     return [numpy2word(input) for input in inputs]
 
 
-RADICALS = ['.'] + list('אבגדהוזחטיכלמנסעפצקרשת') + ["ג'", "ז'", "צ'", "שׂ"]
+RADICALS = ['_', '.'] + list('אבגדהוזחטיכלמנסעפצקרשת') + ["ג'", "ז'", "צ'", "שׂ"]
 
-BINYAN = 'פעל נפעל פיעל פועל הפעיל הופעל התפעל'.split()
-TENSE = 'עבר הווה עתיד ציווי'.split()
-VOICE = 'ראשון שני שלישי הכל _'.split()
-GENDER = 'זכר נקבה סתמי _'.split()
-PLURAL = 'יחיד רבים _'.split()
+BINYAN = ['_'] + 'פעל נפעל פיעל פועל הפעיל הופעל התפעל'.split()
+TENSE = ['_'] + 'עבר הווה עתיד ציווי'.split()
+VOICE = ['_'] + 'ראשון שני שלישי הכל'.split()
+GENDER = ['_'] + 'זכר נקבה סתמי'.split()
+PLURAL = ['_'] + 'יחיד רבים'.split()
 
 NONROOTS = ['B', 'T', 'V', 'G', 'P']
 ROOTS = ['R1', 'R2', 'R3', 'R4']
@@ -108,20 +108,20 @@ def list_of_lists_to_category(items):
 
 def load_dataset(file_pat):
     *features_train, verbs_train = concrete.load_raw_dataset(f'{file_pat}_train.tsv')
-    *features_test, verbs_test = concrete.load_raw_dataset(f'{file_pat}_test.tsv')
+    *features_val, verbs_val = concrete.load_raw_dataset(f'{file_pat}_val.tsv')
     return ((wordlist2numpy(verbs_train), list_of_lists_to_category(features_train)),
-            (wordlist2numpy(verbs_test) , list_of_lists_to_category(features_test )))
+            (wordlist2numpy(verbs_val) , list_of_lists_to_category(features_val )))
 
 
 def load_dataset_split(filename, split):
     *features_train, verbs_train = concrete.load_raw_dataset(filename)
-    features_test = [t[-split:] for t in features_train]
-    verbs_test = verbs_train[-split:]
+    features_val = [t[-split:] for t in features_train]
+    verbs_val = verbs_train[-split:]
     del verbs_train[-split:]
     for t in features_train:
         del t[-split:]
     return ((wordlist2numpy(verbs_train), list_of_lists_to_category(features_train)),
-            (wordlist2numpy(verbs_test), list_of_lists_to_category(features_test)))
+            (wordlist2numpy(verbs_val), list_of_lists_to_category(features_val)))
 
 
 class Classes:
@@ -153,6 +153,8 @@ class Classes:
     PronNumber = ['_', 'Plur', 'Plur,Sing', 'Sing']
     PronPerson = ['_', '1', '2', '3']
 
+def names():
+    return ['POS', 'B', 'R1', 'R2', 'R3', 'R4']
 
 def features(w, word_maxlen):
     a1 = a2 = a3 = a4 = '_'
@@ -174,26 +176,30 @@ def transpose(list_of_lists):
     return list(zip(*list_of_lists))
 
 
-def load_sentences_split(conllu_filename, split, sentence_maxlen=30, word_maxlen=11):
+def load_sentences(conllu_filename, sentence_maxlen=30, word_maxlen=11):
     data = [
         transpose([features(w, word_maxlen) for w in words])
         for id, text, words in ud.parse_file_merge(conllu_filename, ud.parse_opnlp)
     ]
     x_train, *ys_train = [pad_sequences([row[i] for row in data], sentence_maxlen)
                           for i in range(7)]
-    ys_train = np.array(ys_train)
+    return x_train, ys_train
 
-    ys_test, ys_train = ys_train[:, :split, :], ys_train[:, split:, :]
-    x_test, x_train, = x_train[:split, :, :],  x_train[split:, :, :]
+
+def split_sentences(data, split):
+    x_train, ys_train = data
+    ys_val, ys_train = ys_train[:, :split, :], ys_train[:, split:, :]
+    x_val, x_train, = x_train[:split, :, :],  x_train[split:, :, :]
 
     # x_train: (NSAMPLES, SENT_MAXLEN, WORD_MAXLEN)
     # ys_train: (NFEATURES, NSAMPLES, SENT_MAXLEN)
     return ((x_train, ys_train),
-            (x_test, ys_test))
+            (x_val, ys_val))
 
 
 if __name__ == '__main__':
-    ((x_train, ys_train), (x_test, ys_test)) = load_sentences_split(f'../Hebrew_UD/he_htb-ud-train.conllu', 100, 11, 30)
-    print(x_train.shape, x_test.shape)
-    print(ys_train.shape, ys_test.shape)
+    data = load_sentences(f'../Hebrew_UD/he_htb-ud-train.conllu', 11, 30)
+    ((x_train, ys_train), (x_val, ys_val)) = split_sentences(data, 100)
+    print(x_train.shape, x_val.shape)
+    print(ys_train.shape, ys_val.shape)
     # print(data)
