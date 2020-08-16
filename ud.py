@@ -1,5 +1,5 @@
 import string
-from typing import NamedTuple, List, Tuple, Iterator
+from typing import NamedTuple, List, Tuple, Iterator, Literal
 from collections import Counter
 import sys
 
@@ -50,50 +50,63 @@ class Sentence(NamedTuple):
 
 
 class Token(NamedTuple):
-    id: str
-    form: str
-    lemma: str
-    det: bool
-    adp_sconj: List[str]  # ל, מ, ב, כ, ש
-    cconj: bool
-    xpos: str
-    adp_pron: List[str]  # של, הם, ו
-    Case: str = '_'
-    HebExistential: str = '_'
-    Voice: str = '_'
-    VerbForm: str = '_'
-    Prefix: str = '_'
-    Polarity: str = '_'
-    Xtra: str = '_'
-    Definite: str = '_'
-    VerbType: str = '_'
-    PronType: str = '_'
-    Number: str = '_'
-    Reflex: str = '_'
-    Mood: str = '_'
-    HebSource: str = '_'
-    Gender: str = '_'
-    Tense: str = '_'
-    Abbr: str = '_'
-    Person: str = '_'
-    HebBinyan: str = '_'
-    Root: str = '_'
-    PronGender: str = '_'
-    PronNumber: str = '_'
-    PronPerson: str = '_'
+    id: str = '_'
+    form: str = '_'
+    lemma: str = '_'
+
+    adp_sconj: List[str] = '_'  # Literal[['_', 'ב'], ['_', 'ל'], ['_'], ['ב', 'ב'], ['ב', 'כ'], ['ב', 'ל'], ['ב'], ['ה'], ['כ', '_'], ['כ', 'ב'], ['כ'], ['כש', 'ב'], ['כש', 'ל'], ['כש'], ['ל'], ['ל', 'כ'], ['מ', '_'], ['מ', 'ב'], ['מ'], ['מש'], ['עד', '_'], ['על'], ['ש', 'ב'], ['ש', 'כ'], ['ש', 'ל'], ['ש', 'מ'], ['ש'], []] = '_'
+    adp_pron: List[str] = '_'  # Literal[['את', 'הם'], ['את', 'ו'], ['ה'], ['הם'], ['הן'], ['ו'], ['של', 'את'], ['של', 'אתה'], ['של', 'ה'], ['של', 'הם'], ['של', 'הן'], ['של', 'ו'], ['של', 'י'], ['של', 'כם'], ['של', 'נו'], []] = '_'
+
+    Abbr: Literal['_', 'Yes'] = '_'
+    Case: Literal['_', 'Acc', 'Gen', 'Tem'] = '_'
+    Cconj: Literal['_', 'False', 'True'] = '_'
+    Det: Literal['_', 'False', 'True'] = '_'
+    Definite: Literal['_', 'Cons', 'Def'] = '_'
+    Gender: Literal['_', 'Fem', 'Fem,Masc', 'Masc'] = '_'
+    HebExistential: Literal['_', 'True'] = '_'
+    HebSource: Literal['_', 'ConvUncertainHead', 'ConvUncertainLabel'] = '_'
+    HebBinyan: Literal['_', 'PAAL', 'PIEL', 'PUAL', 'NIFAL', 'HIFIL', 'HUFAL', 'HITPAEL'] = '_'
+    Mood: Literal['_', 'Imp'] = '_'
+    Number: Literal['_', 'Dual', 'Dual,Plur', 'Plur', 'Plur,Sing', 'Sing'] = '_'
+    Person: Literal['_', '1', '1,2,3', '2', '3'] = '_'
+    Polarity: Literal['_', 'Neg', 'Pos'] = '_'
+    Pos: Literal['_', 'ADJ', 'ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'INTJ', 'NOUN', 'NUM', 'PRON', 'PROPN', 'PUNCT', 'SCONJ', 'VERB', 'X'] = '_'
+    Prefix: Literal['_', 'Yes'] = '_'
+    PronGender: Literal['_', 'Fem', 'Fem,Masc', 'Masc'] = '_'
+    PronNumber: Literal['_', 'Plur', 'Plur,Sing', 'Sing'] = '_'
+    PronPerson: Literal['_', '1', '2', '3'] = '_'
+    PronType: Literal['_', 'Art', 'Dem', 'Emp', 'Ind', 'Int', 'Prs'] = '_'
+    Reflex: Literal['_', 'Yes'] = '_'
+    R1: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
+    R2: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
+    R3: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
+    R4: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
+    Tense: Literal['_', 'Fut', 'Past'] = '_'
+    VerbForm: Literal['_', 'Inf', 'Part'] = '_'
+    VerbType: Literal['_', 'Cop', 'Mod'] = '_'
+    Voice: Literal['_', 'Act', 'Mid', 'Pass'] = '_'
+    Xtra: Literal['_', 'Junk'] = '_'
 
     def __str__(self):
         return '\t'.join([
             self.id or '_',
             self.form or '_',
             self.lemma,
-            'ה' if self.det else '_',
             ''.join(self.adp_sconj) or '_',
-            'ו' if self.cconj else '_',
-            self.xpos or '_',
             ''.join(self.adp_pron) or '_',
-            *self[8:]
+            *self[5:]
         ])
+
+    def encode_label(self, label):
+        return Token.__annotations__[label].__args__.index(self._asdict()[label])
+
+    @staticmethod
+    def decode_label(label, idx):
+        return Token.__annotations__[label].__args__[idx]
+
+    @staticmethod
+    def class_size(label):
+        return len(Token.__annotations__[label].__args__)
 
 
 def expand_feats(token):
@@ -162,19 +175,26 @@ def merge_consecutive(tokens: List[Tuple[Conllu, List[Conllu]]]):
 
 
 def merge(id: str, t: Conllu, subs: List[Conllu]):
-    det = False
+    det: Literal['_', 'False', 'True'] = 'False'
+    cconj: Literal['_', 'False', 'True'] = 'False'
     adp_sconj = []
     adp_pron = []
-    cconj = False
     xpos = t.xpos
     feats = t.feats
     pron = {}
     lemma = t.form.strip(string.punctuation)
     if subs:
-        det = any(s.xpos == 'DET' for s in subs)
-        cconj = any(s.xpos == 'CCONJ' for s in subs)
+        if any(s.xpos == 'DET' for s in subs):
+            det = 'True'
+        if any(s.xpos == 'CCONJ' for s in subs):
+            cconj = 'True'
         [pron] = [s.feats for s in subs if s.xpos == 'PRON'] or [{}]
-        [(k, main)] = [(i, s) for (i, s) in enumerate(subs) if s.xpos in ['NOUN', 'VERB', 'ADJ', 'PROPN']] or [(None, None)]
+        m = {s.xpos: i for (i, s) in enumerate(subs)}
+        main = None
+        for pos in ['VERB', 'NOUN', 'AUX', 'PROPN', 'ADJ', 'ADP', 'ADV', 'PRON', 'INTJ', 'NUM', 'X', 'CCONJ', 'SCONJ', 'DET', 'PUNCT']:
+            k = m.get(pos)
+            if k:
+                main = subs[k]
         if k:
             lemma = main.lemma.strip(string.punctuation)
             adp_sconj = [s.lemma for s in subs[:k] if s.xpos in ['ADP', 'SCONJ']]
@@ -185,18 +205,22 @@ def merge(id: str, t: Conllu, subs: List[Conllu]):
                               .replace('אנחנו', 'נו')
                               .replace('אתם', 'כם')
                         for s in subs[k+1:] if s.xpos in ['ADP', 'PRON']]
-        xpos = main.xpos if main else None
-        feats = main.feats if main else '_'
+        xpos = main.xpos if main else '_'
+        feats = main.feats if main else {}
+    if 'Root' in feats:
+        feats['R1'], feats['R2'], *r3, feats['R4'] = feats['Root'].split('.')
+        feats['R3'] = r3[0] if r3 else '.'
+        del feats['Root']
     return Token(
         id=id,
         form=t.form,
         lemma=lemma,
-        det=det,
         adp_sconj=adp_sconj,
-        cconj=cconj,
-        xpos=xpos,
+        Pos=xpos,
         adp_pron=adp_pron,
-        **(feats if feats != '_' else {}),
+        Cconj=cconj,
+        Det=det,
+        **feats,
         PronGender=pron.get('Gender', '_'),
         PronNumber=pron.get('Number', '_'),
         PronPerson=pron.get('Person', '_'),
@@ -277,14 +301,13 @@ def print_token_prefixes():
             for token in sentence:
                 # print(token, file=outfile)
                 if token.HebBinyan != '_':
-                    if token.adp_sconj or token.cconj:
-                        p = ('ו' if token.cconj else '') + ''.join(token.adp_sconj)
+                    if token.adp_sconj or token.Cconj:
+                        p = ('ו' if token.Cconj else '') + ''.join(token.adp_sconj)
                         print(p, token.form, sep='\t', file=outfile)
                         stats[p] += 1
                     else:
                         stats[''] += 1
             # print(file=outfile)
-    total = sum(stats.values())
     for k, v in sorted(stats.items(), key=lambda kv: kv[1]):
         print(k, v)  #, v/total)
 
@@ -331,16 +354,13 @@ def extract_noncontext():
         with open(f'ud/nocontext-{part}.tsv', 'w', encoding='utf8') as f:
             for id, text, words in parse_file_merge(f'../Hebrew_UD/he_htb-ud-{part}.conllu', parse_opnlp):
                 for w in words:
-                    if w.HebBinyan != '_' and w.Root != '_':
-                        root = w.Root.split('.')
-                        if len(root) == 3:
-                            root = root[:2] + ['.'] + root[-1:]
+                    if w.HebBinyan != '_' and w.R1 != '_':
                         number = translate.get(w.Number)
                         gender = translate.get(w.Gender)
                         person = translate.get(w.Person)
                         tense = translate.get(w.Tense) if w.Tense else 'הווה'
                         binyan = translate.get(w.HebBinyan)
-                        print(binyan, tense, person, gender, number, *root, w.form, sep='\t', file=f)
+                        print(binyan, tense, person, gender, number, w.R1, w.R2, w.R3, w.R4, w.form, sep='\t', file=f)
 
 
 def extract_withcontext():

@@ -1,3 +1,4 @@
+from typing import Literal
 import numpy as np
 import concrete
 import ud
@@ -24,11 +25,14 @@ def pad_sequences(sequences, maxlen, dtype=int, value=0) -> np.ndarray:
     return x
 
 
-def word2numpy(txt, pad=None):
+def pad(xs, maxlen, val):
+    if len(xs) < maxlen:
+        xs.extend([val] * maxlen - len(xs))
+    return xs[:maxlen]
+
+
+def word2numpy(txt):
     ords = [ord(c) for c in txt]
-    if pad is not None:
-        ords.extend([0] * (pad - len(ords)))
-        del ords[pad:]
     return np.array(ords)
 
 
@@ -47,7 +51,7 @@ def numpy2wordlist(inputs):
     return [numpy2word(input) for input in inputs]
 
 
-RADICALS = ['_', '.'] + list('אבגדהוזחטיכלמנסעפצקרשת') + ["ג'", "ז'", "צ'", "שׂ"]
+RADICALS = ['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"]
 
 BINYAN = ['_'] + 'פעל נפעל פיעל פועל הפעיל הופעל התפעל'.split()
 TENSE = ['_'] + 'עבר הווה עתיד ציווי'.split()
@@ -126,74 +130,25 @@ def load_dataset_split(filename, split, word_maxlen=12):
             (wordlist2numpy(verbs_val, word_maxlen=word_maxlen), list_of_lists_to_category(features_val)))
 
 
-class Classes:
-    det = ['_', 'False', 'True']
-    adp_sconj = [['_', 'ב'], ['_', 'ל'], ['_'], ['ב', 'ב'], ['ב', 'כ'], ['ב', 'ל'], ['ב'], ['ה'], ['כ', '_'], ['כ', 'ב'], ['כ'], ['כש', 'ב'], ['כש', 'ל'], ['כש'], ['ל'], ['ל', 'כ'], ['מ', '_'], ['מ', 'ב'], ['מ'], ['מש'], ['עד', '_'], ['על'], ['ש', 'ב'], ['ש', 'כ'], ['ש', 'ל'], ['ש', 'מ'], ['ש'], []]
-    cconj = ['_', 'False', 'True']
-    xpos = ['_', 'ADJ', 'ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'INTJ', 'NOUN', 'NUM', 'PRON', 'PROPN', 'PUNCT', 'SCONJ', 'VERB', 'X']
-    adp_pron = [['את', 'הם'], ['את', 'ו'], ['ה'], ['הם'], ['הן'], ['ו'], ['של', 'את'], ['של', 'אתה'], ['של', 'ה'], ['של', 'הם'], ['של', 'הן'], ['של', 'ו'], ['של', 'י'], ['של', 'כם'], ['של', 'נו'], []]
-    Case = ['_', 'Acc', 'Gen', 'Tem']
-    HebExistential = ['_', 'True']
-    Voice = ['_', 'Act', 'Mid', 'Pass']
-    VerbForm = ['_', 'Inf', 'Part']
-    Prefix = ['_', 'Yes']
-    Polarity = ['_', 'Neg', 'Pos']
-    Xtra = ['_', 'Junk']
-    Definite = ['_', 'Cons', 'Def']
-    VerbType = ['_', 'Cop', 'Mod']
-    PronType = ['_', 'Art', 'Dem', 'Emp', 'Ind', 'Int', 'Prs']
-    Number = ['_', 'Dual', 'Dual,Plur', 'Plur', 'Plur,Sing', 'Sing']
-    Reflex = ['_', 'Yes']
-    Mood = ['_', 'Imp']
-    HebSource = ['_', 'ConvUncertainHead', 'ConvUncertainLabel']
-    Gender = ['_', 'Fem', 'Fem,Masc', 'Masc']
-    Tense = ['_', 'Fut', 'Past']
-    Abbr = ['_', 'Yes']
-    Person = ['_', '1', '1,2,3', '2', '3']
-    HebBinyan = ['_', 'PAAL', 'PIEL', 'PUAL', 'NIFAL', 'HIFIL', 'HUFAL', 'HITPAEL']
-    PronGender = ['_', 'Fem', 'Fem,Masc', 'Masc']
-    PronNumber = ['_', 'Plur', 'Plur,Sing', 'Sing']
-    PronPerson = ['_', '1', '2', '3']
-
-
-def names():
-    return ['POS', 'B', 'R1', 'R2', 'R3', 'R4']
-
-
-def features(w, word_maxlen):
-    a1 = a2 = a3 = a4 = '_'
-    if w.Root != '_':
-        a1, a2, *a3, a4 = w.Root.split('.')
-        a3 = a3[0] if a3 else '.'
-    return (
-        word2numpy(w.form, pad=word_maxlen),
-        Classes.xpos.index(w.xpos or '_'),
-        Classes.HebBinyan.index(w.HebBinyan or '_'),
-        to_category('R1', a1),
-        to_category('R2', a2),
-        to_category('R3', a3),
-        to_category('R4', a4),
-    )
-
-
 def transpose(list_of_lists):
     return list(zip(*list_of_lists))
 
 
-def load_sentences(conllu_filename, sentence_maxlen=30, word_maxlen=11):
-    data = [
-        transpose([features(w, word_maxlen) for w in words])
-        for id, text, words in ud.parse_file_merge(conllu_filename, ud.parse_opnlp)
-    ]
-    x_train, *ys_train = [pad_sequences([row[i] for row in data], sentence_maxlen)
-                          for i in range(7)]
-    return x_train, ys_train
+def load_sentences(conllu_filename, features, sentence_maxlen=30, word_maxlen=11):
+    parsed = list(ud.parse_file_merge(conllu_filename, ud.parse_opnlp))
 
+    x = pad_sequences([pad_sequences([word2numpy(w.form) for w in words], word_maxlen)
+                       for id, text, words in parsed], sentence_maxlen)
 
-def temp():
-    pass
-    # print(data)
+    labels = np.array([pad_sequences([[token.encode_label(f) for token in words]
+                                      for id, text, words in parsed], sentence_maxlen)
+                       for f in features])
+    return x, labels
 
 
 if __name__ == '__main__':
-    temp()
+    features = ['Pos', 'HebBinyan', 'R1', 'R2', 'R3', 'R4']
+    labels = load_sentences(f'../Hebrew_UD/he_htb-ud-train.conllu', features=features,
+                            sentence_maxlen=30, word_maxlen=11)
+    print(labels[1].shape)
+
