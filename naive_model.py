@@ -1,7 +1,7 @@
 from collections import defaultdict
 from concrete import iter_items
 from collections import Counter
-from encoding import NAMES, CLASSES, wordlist2numpy, numpy2word, list_from_category, numpy2wordlist, from_category
+from encoding import NAMES, CLASSES, numpy2word, numpy2wordlist, from_category
 import numpy as np
 import torch
 

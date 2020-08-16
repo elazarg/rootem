@@ -32,9 +32,11 @@ def word2numpy(txt, pad=None):
     return np.array(ords)
 
 
-def wordlist2numpy(lines):
-    return pad_sequences([word2numpy(line) for line in lines],
-                         maxlen=12, dtype=int, value=0)
+def wordlist2numpy(lines, word_maxlen=None):
+    rows = [word2numpy(line) for line in lines]
+    if word_maxlen is not None:
+        return pad_sequences(rows, maxlen=word_maxlen, dtype=int, value=0)
+    return rows
 
 
 def numpy2word(input):
@@ -106,22 +108,22 @@ def list_of_lists_to_category(items):
             for name, item in zip(NAMES, items)}
 
 
-def load_dataset(file_pat):
+def load_dataset(file_pat, word_maxlen=12):
     *features_train, verbs_train = concrete.load_raw_dataset(f'{file_pat}_train.tsv')
     *features_val, verbs_val = concrete.load_raw_dataset(f'{file_pat}_val.tsv')
-    return ((wordlist2numpy(verbs_train), list_of_lists_to_category(features_train)),
-            (wordlist2numpy(verbs_val) , list_of_lists_to_category(features_val )))
+    return ((wordlist2numpy(verbs_train, word_maxlen=word_maxlen), list_of_lists_to_category(features_train)),
+            (wordlist2numpy(verbs_val, word_maxlen=word_maxlen) , list_of_lists_to_category(features_val )))
 
 
-def load_dataset_split(filename, split):
+def load_dataset_split(filename, split, word_maxlen=12):
     *features_train, verbs_train = concrete.load_raw_dataset(filename)
     features_val = [t[-split:] for t in features_train]
     verbs_val = verbs_train[-split:]
     del verbs_train[-split:]
     for t in features_train:
         del t[-split:]
-    return ((wordlist2numpy(verbs_train), list_of_lists_to_category(features_train)),
-            (wordlist2numpy(verbs_val), list_of_lists_to_category(features_val)))
+    return ((wordlist2numpy(verbs_train, word_maxlen=word_maxlen), list_of_lists_to_category(features_train)),
+            (wordlist2numpy(verbs_val, word_maxlen=word_maxlen), list_of_lists_to_category(features_val)))
 
 
 class Classes:
@@ -148,13 +150,15 @@ class Classes:
     Tense = ['_', 'Fut', 'Past']
     Abbr = ['_', 'Yes']
     Person = ['_', '1', '1,2,3', '2', '3']
-    HebBinyan = ['_', 'HIFIL', 'HITPAEL', 'HUFAL', 'NIFAL', 'PAAL', 'PIEL', 'PUAL']
+    HebBinyan = ['_', 'PAAL', 'PIEL', 'PUAL', 'NIFAL', 'HIFIL', 'HUFAL', 'HITPAEL']
     PronGender = ['_', 'Fem', 'Fem,Masc', 'Masc']
     PronNumber = ['_', 'Plur', 'Plur,Sing', 'Sing']
     PronPerson = ['_', '1', '2', '3']
 
+
 def names():
     return ['POS', 'B', 'R1', 'R2', 'R3', 'R4']
+
 
 def features(w, word_maxlen):
     a1 = a2 = a3 = a4 = '_'
@@ -186,20 +190,10 @@ def load_sentences(conllu_filename, sentence_maxlen=30, word_maxlen=11):
     return x_train, ys_train
 
 
-def split_sentences(data, split):
-    x_train, ys_train = data
-    ys_val, ys_train = ys_train[:, :split, :], ys_train[:, split:, :]
-    x_val, x_train, = x_train[:split, :, :],  x_train[split:, :, :]
-
-    # x_train: (NSAMPLES, SENT_MAXLEN, WORD_MAXLEN)
-    # ys_train: (NFEATURES, NSAMPLES, SENT_MAXLEN)
-    return ((x_train, ys_train),
-            (x_val, ys_val))
+def temp():
+    pass
+    # print(data)
 
 
 if __name__ == '__main__':
-    data = load_sentences(f'../Hebrew_UD/he_htb-ud-train.conllu', 11, 30)
-    ((x_train, ys_train), (x_val, ys_val)) = split_sentences(data, 100)
-    print(x_train.shape, x_val.shape)
-    print(ys_train.shape, ys_val.shape)
-    # print(data)
+    temp()
