@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from flask import Flask, render_template, request, redirect, make_response
 
-from concrete import enumerate_possible_forms, HEADER
+from verbs import enumerate_possible_forms, HEADER
 
 app = Flask(__name__, template_folder='web/templates', static_folder='web/static')
 

@@ -1,6 +1,6 @@
-from typing import Literal
+from typing import Literal, NamedTuple
 import numpy as np
-import concrete
+import verbs
 import ud
 
 
@@ -51,44 +51,46 @@ def numpy2wordlist(inputs):
     return [numpy2word(input) for input in inputs]
 
 
-RADICALS = ['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"]
+class Verb(NamedTuple):
+    surface: str = '_'
+    R1: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
+    R2: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
+    R3: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
+    R4: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
+    Binyan: Literal['_', 'פעל', 'נפעל', 'פיעל', 'פועל', 'הפעיל', 'הופעל', 'התפעל'] = '_'
+    Tense: Literal['_', 'עבר', 'הווה', 'עתיד', 'ציווי'] = '_'
+    Voice: Literal['_', 'ראשון', 'שני', 'שלישי'] = '_'
+    Gender: Literal['_', 'זכר', 'נקבה', 'סתמי'] = '_'
+    Plural: Literal['_', 'יחיד', 'רבים'] = '_'
 
-BINYAN = ['_'] + 'פעל נפעל פיעל פועל הפעיל הופעל התפעל'.split()
-TENSE = ['_'] + 'עבר הווה עתיד ציווי'.split()
-VOICE = ['_'] + 'ראשון שני שלישי הכל'.split()
-GENDER = ['_'] + 'זכר נקבה סתמי'.split()
-PLURAL = ['_'] + 'יחיד רבים'.split()
+    @classmethod
+    def classes(cls, label):
+        return cls.__annotations__[label].__args__
 
-NONROOTS = ['B', 'T', 'V', 'G', 'P']
-ROOTS = ['R1', 'R2', 'R3', 'R4']
-NAMES = NONROOTS + ROOTS
-CLASSES = {
-    'B': BINYAN,
-    'T': TENSE,
-    'V': VOICE,
-    'G': GENDER,
-    'P': PLURAL,
-    'R1': RADICALS,
-    'R2': RADICALS,
-    'R3': RADICALS,
-    'R4': RADICALS,
-}
+    def encode_label(self, label):
+        try:
+            return type(self).classes(label).index(self._asdict()[label])
+        except ValueError:
+            raise ValueError(f'{self._asdict()[label]} not in {label}')
 
+    def encode_labels(self):
+        return [self.encode_label(label)
+                for label, vocab in type(self).__annotations__.items()
+                if vocab != str]
 
-def combined_shape(combination):
-    if isinstance(combination, str):
-        return (len(CLASSES[combination]),)
-    return tuple(len(CLASSES[k]) for k in combination)
+    @classmethod
+    def decode_label(cls, label, idx):
+        return cls.classes(label)[idx]
+
+    @classmethod
+    def class_size(cls, label):
+        return len(cls.classes(label))
 
 
 def class_name(combination):
     if isinstance(combination, str):
         return combination
     return 'x'.join(combination)
-
-
-def class_size(combination):
-    return np.prod(combined_shape(combination))
 
 
 def to_category(name, b):
@@ -112,22 +114,9 @@ def list_of_lists_to_category(items):
             for name, item in zip(NAMES, items)}
 
 
-def load_dataset(file_pat, word_maxlen=12):
-    *features_train, verbs_train = concrete.load_raw_dataset(f'{file_pat}_train.tsv')
-    *features_val, verbs_val = concrete.load_raw_dataset(f'{file_pat}_val.tsv')
-    return ((wordlist2numpy(verbs_train, word_maxlen=word_maxlen), list_of_lists_to_category(features_train)),
-            (wordlist2numpy(verbs_val, word_maxlen=word_maxlen) , list_of_lists_to_category(features_val )))
-
-
-def load_dataset_split(filename, split, word_maxlen=12):
-    *features_train, verbs_train = concrete.load_raw_dataset(filename)
-    features_val = [t[-split:] for t in features_train]
-    verbs_val = verbs_train[-split:]
-    del verbs_train[-split:]
-    for t in features_train:
-        del t[-split:]
-    return ((wordlist2numpy(verbs_train, word_maxlen=word_maxlen), list_of_lists_to_category(features_train)),
-            (wordlist2numpy(verbs_val, word_maxlen=word_maxlen), list_of_lists_to_category(features_val)))
+def load_verbs(filename, word_maxlen=12):
+    *features_train, verbs_train = verbs.load_raw_dataset(filename)
+    return wordlist2numpy(verbs_train, word_maxlen=word_maxlen), list_of_lists_to_category(features_train)
 
 
 def transpose(list_of_lists):

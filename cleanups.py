@@ -2,7 +2,7 @@ from typing import NamedTuple, Tuple, Iterator
 from collections import defaultdict, Counter
 
 import ud
-from concrete import normalize_sofiot
+from verbs import normalize_sofiot
 from root_verb_tables import generate_table_for_root
 
 

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from concrete import iter_items
+from verbs import iter_items
 from collections import Counter
 from encoding import NAMES, CLASSES, numpy2word, numpy2wordlist, from_category
 import numpy as np

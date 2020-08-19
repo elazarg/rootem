@@ -1,6 +1,6 @@
 import random
 
-from concrete import generate_all_verbs
+from verbs import generate_all_verbs
 from root_verb_tables import generate_tag_for_roots, generate_table_for_root
 
 

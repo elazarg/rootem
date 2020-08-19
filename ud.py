@@ -63,7 +63,7 @@ class Token(NamedTuple):
     Gender: Literal['_', 'Fem', 'Fem,Masc', 'Masc'] = '_'
     HebExistential: Literal['_', 'True'] = '_'
     HebSource: Literal['_', 'ConvUncertainHead', 'ConvUncertainLabel'] = '_'
-    HebBinyan: Literal['_', 'PAAL', 'PIEL', 'PUAL', 'NIFAL', 'HIFIL', 'HUFAL', 'HITPAEL'] = '_'
+    HebBinyan: Literal['_', 'PAAL', 'NIFAL', 'PIEL', 'PUAL', 'HIFIL', 'HUFAL', 'HITPAEL'] = '_'
     Mood: Literal['_', 'Imp'] = '_'
     Number: Literal['_', 'Dual', 'Dual,Plur', 'Plur', 'Plur,Sing', 'Sing'] = '_'
     Person: Literal['_', '1', '1,2,3', '2', '3'] = '_'
@@ -93,19 +93,28 @@ class Token(NamedTuple):
             *self[3:]
         ])
 
+    @classmethod
+    def classes(cls, label):
+        return cls.__annotations__[label].__args__
+
     def encode_label(self, label):
         try:
-            return Token.__annotations__[label].__args__.index(self._asdict()[label])
-        except ValueError as ex:
+            return type(self).classes(label).index(self._asdict()[label])
+        except ValueError:
             raise ValueError(f'{self._asdict()[label]} not in {label}')
 
-    @staticmethod
-    def decode_label(label, idx):
-        return Token.__annotations__[label].__args__[idx]
+    def encode_labels(self):
+        return [self.encode_label(label)
+                for label, kind in type(self).__annotations__.items()
+                if kind != str]
 
-    @staticmethod
-    def class_size(label):
-        return len(Token.__annotations__[label].__args__)
+    @classmethod
+    def decode_label(cls, label, idx):
+        return cls.classes(label)[idx]
+
+    @classmethod
+    def class_size(cls, label):
+        return len(cls.classes(label))
 
 
 def expand_feats(token):
@@ -368,7 +377,7 @@ def extract_withcontext():
                 print('sent_id:', id, file=f)
                 print('text:', text, file=f)
                 for w in words:
-                    # prefix.add(w.FullPrefix)
+                    print(w.encode())
                     print(w, file=f)
                 print(file=f)
     # print(f'Literal[{", ".join(prefix)}]')
