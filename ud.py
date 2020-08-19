@@ -54,14 +54,12 @@ class Token(NamedTuple):
     form: str = '_'
     lemma: str = '_'
 
-    adp_sconj: List[str] = '_'  # Literal[['_', 'ב'], ['_', 'ל'], ['_'], ['ב', 'ב'], ['ב', 'כ'], ['ב', 'ל'], ['ב'], ['ה'], ['כ', '_'], ['כ', 'ב'], ['כ'], ['כש', 'ב'], ['כש', 'ל'], ['כש'], ['ל'], ['ל', 'כ'], ['מ', '_'], ['מ', 'ב'], ['מ'], ['מש'], ['עד', '_'], ['על'], ['ש', 'ב'], ['ש', 'כ'], ['ש', 'ל'], ['ש', 'מ'], ['ש'], []] = '_'
-    adp_pron: List[str] = '_'  # Literal[['את', 'הם'], ['את', 'ו'], ['ה'], ['הם'], ['הן'], ['ו'], ['של', 'את'], ['של', 'אתה'], ['של', 'ה'], ['של', 'הם'], ['של', 'הן'], ['של', 'ו'], ['של', 'י'], ['של', 'כם'], ['של', 'נו'], []] = '_'
-
     Abbr: Literal['_', 'Yes'] = '_'
     Case: Literal['_', 'Acc', 'Gen', 'Tem'] = '_'
     Cconj: Literal['_', 'False', 'True'] = '_'
     Det: Literal['_', 'False', 'True'] = '_'
     Definite: Literal['_', 'Cons', 'Def'] = '_'
+    # FullPrefix: Literal['_', 'בב', 'ב', 'בכ', 'בל', 'ה', 'כ', 'כב', 'כש', 'כשב', 'כשל', 'ל', 'לכ', 'מ', 'מב', 'מש', 'עד', 'על', 'ש', 'שב', 'שכ', 'של', 'שמ'] = '_'
     Gender: Literal['_', 'Fem', 'Fem,Masc', 'Masc'] = '_'
     HebExistential: Literal['_', 'True'] = '_'
     HebSource: Literal['_', 'ConvUncertainHead', 'ConvUncertainLabel'] = '_'
@@ -92,13 +90,14 @@ class Token(NamedTuple):
             self.id or '_',
             self.form or '_',
             self.lemma,
-            ''.join(self.adp_sconj) or '_',
-            ''.join(self.adp_pron) or '_',
-            *self[5:]
+            *self[3:]
         ])
 
     def encode_label(self, label):
-        return Token.__annotations__[label].__args__.index(self._asdict()[label])
+        try:
+            return Token.__annotations__[label].__args__.index(self._asdict()[label])
+        except ValueError as ex:
+            raise ValueError(f'{self._asdict()[label]} not in {label}')
 
     @staticmethod
     def decode_label(label, idx):
@@ -177,8 +176,7 @@ def merge_consecutive(tokens: List[Tuple[Conllu, List[Conllu]]]):
 def merge(id: str, t: Conllu, subs: List[Conllu]):
     det: Literal['_', 'False', 'True'] = 'False'
     cconj: Literal['_', 'False', 'True'] = 'False'
-    adp_sconj = []
-    adp_pron = []
+    # full_prefix = '_'
     xpos = t.xpos
     feats = t.feats
     pron = {}
@@ -191,20 +189,20 @@ def merge(id: str, t: Conllu, subs: List[Conllu]):
         [pron] = [s.feats for s in subs if s.xpos == 'PRON'] or [{}]
         m = {s.xpos: i for (i, s) in enumerate(subs)}
         main = None
-        for pos in ['VERB', 'NOUN', 'AUX', 'PROPN', 'ADJ', 'ADP', 'ADV', 'PRON', 'INTJ', 'NUM', 'X', 'CCONJ', 'SCONJ', 'DET', 'PUNCT']:
+        if any('case:gen' in s.deprel for s in subs):
+            feats['Case'] = 'Gen'
+        if any('case:acc' in s.deprel for s in subs):
+            feats['Case'] = 'Acc'
+
+        for pos in ['VERB', 'NOUN', 'AUX', 'PROPN', 'ADJ', 'ADV', 'ADP', 'PRON', 'INTJ', 'NUM', 'X', 'CCONJ', 'SCONJ', 'DET', 'PUNCT']:
             k = m.get(pos)
             if k:
                 main = subs[k]
+                break
         if k:
             lemma = main.lemma.strip(string.punctuation)
-            adp_sconj = [s.lemma for s in subs[:k] if s.xpos in ['ADP', 'SCONJ']]
-            adp_pron = [s.form.replace('_', '')
-                              .replace('הוא', 'ו')
-                              .replace('היא', 'ה')
-                              .replace('אני', 'י')
-                              .replace('אנחנו', 'נו')
-                              .replace('אתם', 'כם')
-                        for s in subs[k+1:] if s.xpos in ['ADP', 'PRON']]
+            # print([s.deprel for s in subs if s.deprel])
+            # full_prefix = ''.join(s.form if len(s.form) < 4 else s.lemma if len(s.lemma) < 4 else '' for s in subs[:k] if s.xpos == 'ADP' and s.deprel == 'case')
         xpos = main.xpos if main else '_'
         feats = main.feats if main else {}
     if 'Root' in feats:
@@ -215,9 +213,8 @@ def merge(id: str, t: Conllu, subs: List[Conllu]):
         id=id,
         form=t.form,
         lemma=lemma,
-        adp_sconj=adp_sconj,
+        # FullPrefix=full_prefix or '_',
         Pos=xpos,
-        adp_pron=adp_pron,
         Cconj=cconj,
         Det=det,
         **feats,
@@ -364,14 +361,17 @@ def extract_noncontext():
 
 
 def extract_withcontext():
+    # prefix = set()
     for part in ['dev', 'test', 'train']:
         with open(f'ud/contextual-{part}.tsv', 'w', encoding='utf8') as f:
             for id, text, words in parse_file_merge(f'../Hebrew_UD/he_htb-ud-{part}.conllu', parse_opnlp):
                 print('sent_id:', id, file=f)
                 print('text:', text, file=f)
                 for w in words:
+                    # prefix.add(w.FullPrefix)
                     print(w, file=f)
                 print(file=f)
+    # print(f'Literal[{", ".join(prefix)}]')
 
 
 if __name__ == '__main__':
