@@ -1,5 +1,46 @@
 import random
+from typing import NamedTuple, Literal
+
+import numpy as np
+
+import utils
 from root_verb_tables import generate_table_for_root
+
+
+class Verb(NamedTuple):
+    Binyan: Literal['_', 'פעל', 'נפעל', 'פיעל', 'פועל', 'הפעיל', 'הופעל', 'התפעל'] = '_'
+    Tense: Literal['_', 'עבר', 'הווה', 'עתיד', 'ציווי'] = '_'
+    Voice: Literal['_', 'ראשון', 'שני', 'שלישי'] = '_'
+    Gender: Literal['_', 'זכר', 'נקבה', 'סתמי'] = '_'
+    Plural: Literal['_', 'יחיד', 'רבים'] = '_'
+    R1: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
+    R2: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
+    R3: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
+    R4: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
+    surface: str = '_'
+
+    @classmethod
+    def classes(cls, label):
+        return cls.__annotations__[label].__args__
+
+    def encode_label(self, label):
+        try:
+            return type(self).classes(label).index(self._asdict()[label])
+        except ValueError:
+            raise ValueError(f'{self._asdict()[label]} not in {label}')
+
+    def encode_labels(self):
+        return [self.encode_label(label)
+                for label, vocab in type(self).__annotations__.items()
+                if vocab != str]
+
+    @classmethod
+    def decode_label(cls, label, idx):
+        return cls.classes(label)[idx]
+
+    @classmethod
+    def class_size(cls, label):
+        return len(cls.classes(label))
 
 
 def normalize_sofiot(s):
@@ -150,17 +191,21 @@ def choose_random_words(num):
     return args
 
 
-def load_raw_dataset(filename):
-    args = [[], [], [], [], [], [], [], [], [], []]
+def load_dataset(filename, word_maxlen):
+    labels = []
+    words = []
     with open(filename, encoding='utf-8') as f:
         for line in f:
             line = line.strip()
             if not line:
                 continue
-            row = line.split()
-            for i in range(len(args)):
-                args[i].append(row[i])
-    return args
+
+            verb = Verb(*line.split())
+            labels.append(verb.encode_labels())
+
+            word = utils.encode_word(verb.surface, word_maxlen)
+            words.append(word)
+    return np.array(words), np.array(labels).T
 
 
 def iter_items(filename):

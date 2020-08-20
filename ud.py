@@ -3,6 +3,10 @@ from typing import NamedTuple, List, Tuple, Iterator, Literal
 from collections import Counter
 import sys
 
+import numpy as np
+
+import utils
+
 
 class Conllu(NamedTuple):
     id: str
@@ -107,6 +111,10 @@ class Token(NamedTuple):
         return [self.encode_label(label)
                 for label, kind in type(self).__annotations__.items()
                 if kind != str]
+
+    @classmethod
+    def zero_labels(cls):
+        return [0 for kind in cls.__annotations__.values() if kind != str]
 
     @classmethod
     def decode_label(cls, label, idx):
@@ -258,6 +266,21 @@ def parse_file_merge(filename, parser):
         yield (sentence.sent_id, sentence.text, words)
 
 
+def load_dataset(filename, parser, sentence_maxlen, word_maxlen):
+    sentence_labels = []
+    sentences = []
+    for sentence in parse_conll_file(filename, parser):
+        tokens = merge_consecutive(group_tokens(sentence.tokens))
+        sentence = [utils.encode_word(t.form, word_maxlen)
+                    for (t, subs) in tokens]
+        sentences.append(utils.pad(sentence, sentence_maxlen, utils.encode_word('', word_maxlen)))
+
+        labels = [merge(str(id), t, subs).encode_labels()
+                  for id, (t, subs) in enumerate(tokens)]
+        sentence_labels.append(utils.pad(labels, sentence_maxlen, Token.zero_labels()))
+    return np.array(sentences), np.array(sentence_labels).transpose([2, 0, 1])
+
+
 def parse_govil(token):
     return Conllu(*token[:6],
                   lemma_academy=token[6],
@@ -284,7 +307,7 @@ def generate_verbsets():
                 print('# sent_id =', sentence_id, file=outfile)
                 print('# text =', text, file=outfile)
                 for token in sentence:
-                    verb = token.xpos if token.xpos in ['VERB'] else '_'
+                    verb = token.Pos if token.Pos in ['VERB'] else '_'
                     print(token.id, token.form, verb, token.HebBinyan, sep='\t', file=outfile)
                 print(file=outfile)
 
@@ -377,7 +400,7 @@ def extract_withcontext():
                 print('sent_id:', id, file=f)
                 print('text:', text, file=f)
                 for w in words:
-                    print(w.encode())
+                    print(w.encode_labels())
                     print(w, file=f)
                 print(file=f)
     # print(f'Literal[{", ".join(prefix)}]')
