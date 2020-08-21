@@ -5,6 +5,7 @@ import numpy as np
 
 import utils
 from root_verb_tables import generate_table_for_root
+from functools import lru_cache
 
 
 class Verb(NamedTuple):
@@ -20,25 +21,29 @@ class Verb(NamedTuple):
     surface: str = '_'
 
     @classmethod
+    @lru_cache()
     def classes(cls, label):
         return cls.__annotations__[label].__args__
 
+    @lru_cache()
     def encode_label(self, label):
         try:
-            return type(self).classes(label).index(self._asdict()[label])
+            return self.classes(label).index(self._asdict()[label])
         except ValueError:
-            raise ValueError(f'{self._asdict()[label]} not in {label}')
+            raise ValueError(f'{repr(self._asdict()[label])} not in {label}')
 
     def encode_labels(self):
         return [self.encode_label(label)
-                for label, vocab in type(self).__annotations__.items()
+                for label, vocab in self.__annotations__.items()
                 if vocab != str]
 
     @classmethod
+    @lru_cache()
     def decode_label(cls, label, idx):
         return cls.classes(label)[idx]
 
     @classmethod
+    @lru_cache()
     def class_size(cls, label):
         return len(cls.classes(label))
 
