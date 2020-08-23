@@ -62,10 +62,11 @@ class UdModel(pl.LightningModule):
         accuracy = {name: masked_equals(y_hat, y).float().mean()
                     for name, (y_hat, y) in m.items()}
 
-        accuracy['Root'] = (masked_equals(*m['R1'])
-                            & masked_equals(*m['R2'])
-                            & masked_equals(*m['R3'])
-                            & masked_equals(*m['R4'])).float().mean()
+        if all(r in m for r in ['R1', 'R2', 'R3', 'R4']):
+            accuracy['Root'] = (masked_equals(*m['R1'])
+                                & masked_equals(*m['R2'])
+                                & masked_equals(*m['R3'])
+                                & masked_equals(*m['R4'])).float().mean()
 
         return loss, accuracy
 

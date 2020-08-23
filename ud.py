@@ -58,36 +58,36 @@ class Token(NamedTuple):
     form: str = '_'
     lemma: str = '_'
 
-    Abbr: Literal['_', 'Yes'] = '_'
+    Abbr: Literal['_', 'No', 'Yes'] = '_'
     Case: Literal['_', 'Acc', 'Gen', 'Tem'] = '_'
     Cconj: Literal['_', 'False', 'True'] = '_'
     Det: Literal['_', 'False', 'True'] = '_'
     Definite: Literal['_', 'Cons', 'Def'] = '_'
     # FullPrefix: Literal['_', 'בב', 'ב', 'בכ', 'בל', 'ה', 'כ', 'כב', 'כש', 'כשב', 'כשל', 'ל', 'לכ', 'מ', 'מב', 'מש', 'עד', 'על', 'ש', 'שב', 'שכ', 'של', 'שמ'] = '_'
     Gender: Literal['_', 'Fem', 'Fem,Masc', 'Masc'] = '_'
-    HebExistential: Literal['_', 'True'] = '_'
+    HebExistential: Literal['_', 'No', 'True'] = '_'
     HebSource: Literal['_', 'ConvUncertainHead', 'ConvUncertainLabel'] = '_'
     HebBinyan: Literal['_', 'PAAL', 'NIFAL', 'PIEL', 'PUAL', 'HIFIL', 'HUFAL', 'HITPAEL'] = '_'
-    Mood: Literal['_', 'Imp'] = '_'
+    Mood: Literal['_', 'No', 'Imp'] = '_'
     Number: Literal['_', 'Dual', 'Dual,Plur', 'Plur', 'Plur,Sing', 'Sing'] = '_'
     Person: Literal['_', '1', '1,2,3', '2', '3'] = '_'
     Polarity: Literal['_', 'Neg', 'Pos'] = '_'
     Pos: Literal['_', 'ADJ', 'ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'INTJ', 'NOUN', 'NUM', 'PRON', 'PROPN', 'PUNCT', 'SCONJ', 'VERB', 'X'] = '_'
-    Prefix: Literal['_', 'Yes'] = '_'
+    Prefix: Literal['_', 'No', 'Yes'] = '_'
     PronGender: Literal['_', 'Fem', 'Fem,Masc', 'Masc'] = '_'
     PronNumber: Literal['_', 'Plur', 'Plur,Sing', 'Sing'] = '_'
     PronPerson: Literal['_', '1', '2', '3'] = '_'
     PronType: Literal['_', 'Art', 'Dem', 'Emp', 'Ind', 'Int', 'Prs'] = '_'
-    Reflex: Literal['_', 'Yes'] = '_'
+    Reflex: Literal['_', 'No', 'Yes'] = '_'
     R1: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
     R2: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
     R3: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
     R4: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
-    Tense: Literal['_', 'Fut', 'Past'] = '_'
+    Tense: Literal['_', 'Present', 'Fut', 'Past'] = '_'
     VerbForm: Literal['_', 'Inf', 'Part'] = '_'
     VerbType: Literal['_', 'Cop', 'Mod'] = '_'
     Voice: Literal['_', 'Act', 'Mid', 'Pass'] = '_'
-    Xtra: Literal['_', 'Junk'] = '_'
+    Xtra: Literal['_', 'No', 'Junk'] = '_'
 
     def __str__(self):
         return '\t'.join([
@@ -105,12 +105,15 @@ class Token(NamedTuple):
         try:
             return type(self).classes(label).index(self._asdict()[label])
         except ValueError:
-            raise ValueError(f'{self._asdict()[label]} not in {label}')
+            raise ValueError(f'{repr(self._asdict()[label])} not in {label}')
+
+    @classmethod
+    def labels(cls):
+        return [label for label, kind in cls.__annotations__.items()
+                if kind != str]
 
     def encode_labels(self):
-        return [self.encode_label(label)
-                for label, kind in type(self).__annotations__.items()
-                if kind != str]
+        return [self.encode_label(label) for label in self.labels()]
 
     @classmethod
     def zero_labels(cls):
@@ -123,6 +126,10 @@ class Token(NamedTuple):
     @classmethod
     def class_size(cls, label):
         return len(cls.classes(label))
+
+    @classmethod
+    def label_map(cls):
+        return {label: cls.class_size(label) for label in cls.labels()}
 
 
 def expand_feats(token):
@@ -226,6 +233,12 @@ def merge(id: str, t: Conllu, subs: List[Conllu]):
         feats['R1'], feats['R2'], *r3, feats['R4'] = feats['Root'].split('.')
         feats['R3'] = r3[0] if r3 else '.'
         del feats['Root']
+    if xpos == 'Verb':
+        if feats.get('Tense', '_') == '_':
+            feats['Tense'] = 'Present'
+    for feat in ['HebExistential', 'Mood', 'Prefix', 'Reflex', 'Abbr', 'Xtra']:
+        if feats.get(feat, '_') == '_':
+            feats[feat] = 'No'
     return Token(
         id=id,
         form=t.form,
@@ -270,13 +283,15 @@ def load_dataset(filename, parser, sentence_maxlen, word_maxlen):
     sentence_labels = []
     sentences = []
     for sentence in parse_conll_file(filename, parser):
-        tokens = merge_consecutive(group_tokens(sentence.tokens))
+        tokens = list(merge_consecutive(group_tokens(sentence.tokens)))
+
         sentence = [utils.encode_word(t.form, word_maxlen)
                     for (t, subs) in tokens]
         sentences.append(utils.pad(sentence, sentence_maxlen, utils.encode_word('', word_maxlen)))
 
         labels = [merge(str(id), t, subs).encode_labels()
                   for id, (t, subs) in enumerate(tokens)]
+
         sentence_labels.append(utils.pad(labels, sentence_maxlen, Token.zero_labels()))
     return np.array(sentences), np.array(sentence_labels).transpose([2, 0, 1])
 
