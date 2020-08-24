@@ -1,7 +1,11 @@
 import random
-from concrete import enumerate_possible_forms, HEADER
+import re
+from collections import defaultdict
 
 from flask import Flask, render_template, request, redirect, make_response
+
+from verbs import enumerate_possible_forms, HEADER
+
 app = Flask(__name__, template_folder='web/templates', static_folder='web/static')
 
 
@@ -12,6 +16,13 @@ def utility_processor():
             'VERB': 'פועל',
             'AUX': 'פועל-עזר',
             '_': '',
+            'PAAL': 'פָּעַל',
+            'NIFAL': 'נִפְעַל',
+            'PIEL': 'פִּעֵל',
+            'PUAL': 'פֻּעַל',
+            'HIFIL': 'הִפְעִיל',
+            'HUFAL': 'הֻפְעַל',
+            'HITPAEL': 'הִתְפַּעֵל',
         }.get(w, w)
     binyanim = {
         'PAAL': 'פָּעַל',
@@ -21,12 +32,380 @@ def utility_processor():
         'HIFIL': 'הִפְעִיל',
         'HUFAL': 'הֻפְעַל',
         'HITPAEL': 'הִתְפַּעֵל',
+        '_': '_',
     }
     return dict(translate=translate, binyanim=binyanim)
 
 
+revisit = [
+    ("verbs_openlp_train.tsv", 3560),
+    ("verbs_openlp_train.tsv", 5689),
+    ("verbs_openlp_train.tsv", 5041),
+    ("verbs_openlp_train.tsv", 799),
+    ("verbs_openlp_train.tsv", 1770),
+    ("verbs_openlp_train.tsv", 4942),
+    ("verbs_openlp_train.tsv", 1383),
+    ("verbs_openlp_train.tsv", 906),
+    ("verbs_openlp_train.tsv", 1846),
+    ("verbs_openlp_train.tsv", 933),
+    ("verbs_openlp_train.tsv", 3731),
+    ("verbs_openlp_train.tsv", 5238),
+    ("verbs_openlp_train.tsv", 4122),
+    ("verbs_openlp_train.tsv", 3926),
+    ("verbs_openlp_train.tsv", 3430),
+    ("verbs_openlp_train.tsv", 3762),
+    ("verbs_openlp_train.tsv", 4656),
+    ("verbs_openlp_train.tsv", 5054),
+    ("verbs_openlp_train.tsv", 1508),
+    ("verbs_openlp_train.tsv", 5487),
+    ("verbs_openlp_train.tsv", 2642),
+    ("verbs_openlp_train.tsv", 1527),
+    ("verbs_openlp_train.tsv", 5335),
+    ("verbs_openlp_train.tsv", 1864),
+    ("verbs_openlp_train.tsv", 4120),
+    ("verbs_openlp_train.tsv", 4512),
+    ("verbs_openlp_train.tsv", 4897),
+    ("verbs_openlp_train.tsv", 5459),
+    ("verbs_openlp_train.tsv", 3446),
+    ("verbs_openlp_train.tsv", 4067),
+    ("verbs_openlp_train.tsv", 794),
+    ("verbs_openlp_train.tsv", 3054),
+    ("verbs_openlp_train.tsv", 4769),
+    ("verbs_openlp_train.tsv", 4199),
+    ("verbs_openlp_train.tsv", 4863),
+    ("verbs_openlp_train.tsv", 3285),
+    ("verbs_openlp_train.tsv", 663),
+    ("verbs_openlp_train.tsv", 1690),
+    ("verbs_openlp_train.tsv", 5092),
+    ("verbs_openlp_train.tsv", 2157),
+    ("verbs_openlp_train.tsv", 4794),
+    ("verbs_openlp_train.tsv", 1841),
+    ("verbs_openlp_train.tsv", 3465),
+    ("verbs_openlp_train.tsv", 5717),
+    ("verbs_openlp_train.tsv", 5153),
+    ("verbs_openlp_train.tsv", 546),
+    ("verbs_openlp_train.tsv", 5606),
+    ("verbs_openlp_train.tsv", 1072),
+    ("verbs_openlp_train.tsv", 5445),
+    ("verbs_openlp_train.tsv", 608),
+    ("verbs_openlp_train.tsv", 1612),
+    ("verbs_openlp_train.tsv", 1188),
+    ("verbs_openlp_train.tsv", 2543),
+    ("verbs_openlp_train.tsv", 1579),
+    ("verbs_openlp_train.tsv", 4784),
+    ("verbs_openlp_train.tsv", 4936),
+    ("verbs_openlp_train.tsv", 4127),
+    ("verbs_openlp_train.tsv", 1527),
+    ("verbs_openlp_train.tsv", 4712),
+    ("verbs_openlp_train.tsv", 5281),
+    ("verbs_openlp_train.tsv", 2403),
+    ("verbs_openlp_train.tsv", 4726),
+    ("verbs_openlp_train.tsv", 1762),
+    ("verbs_openlp_train.tsv", 2737),
+    ("verbs_openlp_train.tsv", 4826),
+    ("verbs_openlp_train.tsv", 2057),
+    ("verbs_openlp_train.tsv", 5414),
+    ("verbs_openlp_train.tsv", 4480),
+    ("verbs_openlp_train.tsv", 4745),
+    ("verbs_openlp_train.tsv", 3744),
+    ("verbs_openlp_train.tsv", 1769),
+    ("verbs_openlp_train.tsv", 3641),
+    ("verbs_openlp_train.tsv", 1025),
+    ("verbs_openlp_train.tsv", 3782),
+    ("verbs_openlp_train.tsv", 2975),
+    ("verbs_openlp_train.tsv", 5286),
+    ("verbs_openlp_train.tsv", 3446),
+    ("verbs_openlp_train.tsv", 4484),
+    ("verbs_openlp_train.tsv", 2442),
+    ("verbs_openlp_train.tsv", 2762),
+    ("verbs_openlp_train.tsv", 3759),
+    ("verbs_openlp_train.tsv", 744),
+    ("verbs_openlp_train.tsv", 1438),
+    ("verbs_openlp_train.tsv", 1496),
+    ("verbs_openlp_train.tsv", 4955),
+    ("verbs_openlp_train.tsv", 4251),
+    ("verbs_openlp_train.tsv", 1423),
+    ("verbs_openlp_train.tsv", 1012),
+    ("verbs_openlp_train.tsv", 5294),
+    ("verbs_openlp_train.tsv", 1711),
+    ("verbs_openlp_train.tsv", 1627),
+    ("verbs_openlp_train.tsv", 3271),
+    ("verbs_openlp_train.tsv", 5172),
+    ("verbs_openlp_train.tsv", 5104),
+    ("verbs_openlp_train.tsv", 4897),
+    ("verbs_openlp_train.tsv", 5577),
+    ("verbs_openlp_train.tsv", 1885),
+    ("verbs_openlp_train.tsv", 1843),
+    ("verbs_openlp_train.tsv", 2605),
+    ("verbs_openlp_train.tsv", 706),
+    ("verbs_openlp_train.tsv", 2493),
+    ("verbs_openlp_train.tsv", 3786),
+    ("verbs_openlp_train.tsv", 3485),
+    ("verbs_openlp_train.tsv", 5477),
+    ("verbs_openlp_train.tsv", 3459),
+    ("verbs_openlp_train.tsv", 1194),
+    ("verbs_openlp_train.tsv", 1129),
+    ("verbs_openlp_train.tsv", 4527),
+    ("verbs_openlp_train.tsv", 1353),
+    ("verbs_openlp_train.tsv", 4617),
+    ("verbs_openlp_train.tsv", 2148),
+    ("verbs_openlp_train.tsv", 3805),
+    ("verbs_openlp_train.tsv", 4874),
+    ("verbs_openlp_train.tsv", 1023),
+    ("verbs_openlp_train.tsv", 2276),
+    ("verbs_openlp_train.tsv", 1245),
+    ("verbs_openlp_train.tsv", 5168),
+    ("verbs_openlp_train.tsv", 561),
+    ("verbs_openlp_train.tsv", 2572),
+    ("verbs_openlp_train.tsv", 5362),
+    ("verbs_openlp_train.tsv", 2903),
+    ("verbs_openlp_train.tsv", 3146),
+    ("verbs_openlp_train.tsv", 1316),
+    ("verbs_openlp_train.tsv", 1883),
+    ("verbs_openlp_train.tsv", 2326),
+    ("verbs_openlp_train.tsv", 3792),
+    ("verbs_openlp_train.tsv", 4474),
+    ("verbs_openlp_train.tsv", 5144),
+    ("verbs_openlp_train.tsv", 4833),
+    ("verbs_openlp_train.tsv", 3878),
+    ("verbs_openlp_train.tsv", 1648),
+    ("verbs_openlp_train.tsv", 3382),
+    ("verbs_openlp_train.tsv", 3777),
+    ("verbs_openlp_train.tsv", 5237),
+    ("verbs_openlp_train.tsv", 2094),
+    ("verbs_openlp_train.tsv", 4538),
+    ("verbs_openlp_train.tsv", 4886),
+    ("verbs_openlp_train.tsv", 1830),
+    ("verbs_openlp_train.tsv", 703),
+    ("verbs_openlp_train.tsv", 3833),
+    ("verbs_openlp_train.tsv", 4564),
+    ("verbs_openlp_train.tsv", 4688),
+    ("verbs_openlp_train.tsv", 5676),
+    ("verbs_openlp_train.tsv", 3181),
+    ("verbs_openlp_train.tsv", 3876),
+    ("verbs_openlp_train.tsv", 4678),
+    ("verbs_openlp_train.tsv", 5597),
+    ("verbs_openlp_train.tsv", 1916),
+    ("verbs_openlp_train.tsv", 3016),
+    ("verbs_openlp_train.tsv", 4553),
+    ("verbs_openlp_train.tsv", 810),
+    ("verbs_openlp_train.tsv", 2952),
+    ("verbs_openlp_train.tsv", 3157),
+    ("verbs_openlp_train.tsv", 2823),
+    ("verbs_openlp_train.tsv", 2970),
+    ("verbs_openlp_train.tsv", 2493),
+    ("verbs_openlp_train.tsv", 2920),
+    ("verbs_openlp_train.tsv", 3427),
+    ("verbs_openlp_train.tsv", 4779),
+    ("verbs_openlp_train.tsv", 4823),
+    ("verbs_openlp_train.tsv", 5688),
+    ("verbs_openlp_train.tsv", 2310),
+    ("verbs_openlp_train.tsv", 2924),
+    ("verbs_openlp_train.tsv", 2788),
+    ("verbs_openlp_train.tsv", 3775),
+    ("verbs_openlp_train.tsv", 4216),
+    ("verbs_openlp_train.tsv", 4597),
+    ("verbs_openlp_train.tsv", 1228),
+    ("verbs_openlp_train.tsv", 1707),
+    ("verbs_openlp_train.tsv", 719),
+    ("verbs_openlp_train.tsv", 1112),
+    ("verbs_openlp_train.tsv", 5546),
+    ("verbs_openlp_train.tsv", 3080),
+    ("verbs_openlp_train.tsv", 3240),
+    ("verbs_openlp_train.tsv", 4162),
+    ("verbs_openlp_train.tsv", 796),
+    ("verbs_openlp_train.tsv", 3747),
+    ("verbs_openlp_train.tsv", 687),
+    ("verbs_openlp_train.tsv", 4425),
+    ("verbs_openlp_train.tsv", 1751),
+    ("verbs_openlp_train.tsv", 3655),
+    ("verbs_openlp_train.tsv", 4678),
+    ("verbs_openlp_train.tsv", 5254),
+    ("verbs_openlp_train.tsv", 4926),
+    ("verbs_openlp_train.tsv", 4002),
+    ("verbs_openlp_train.tsv", 674),
+    ("verbs_openlp_train.tsv", 1034),
+    ("verbs_openlp_train.tsv", 2084),
+    ("verbs_openlp_train.tsv", 3926),
+    ("verbs_openlp_train.tsv", 2136),
+    ("verbs_openlp_train.tsv", 4968),
+    ("verbs_openlp_train.tsv", 701),
+    ("verbs_openlp_train.tsv", 700),
+    ("verbs_openlp_train.tsv", 5038),
+    ("verbs_openlp_train.tsv", 5579),
+    ("verbs_openlp_train.tsv", 3747),
+    ("verbs_openlp_train.tsv", 4231),
+    ("verbs_openlp_train.tsv", 1356),
+    ("verbs_openlp_train.tsv", 4119),
+    ("verbs_openlp_train.tsv", 746),
+    ("verbs_openlp_train.tsv", 5598),
+    ("verbs_openlp_train.tsv", 1596),
+    ("verbs_openlp_train.tsv", 2662),
+    ("verbs_openlp_train.tsv", 3495),
+    ("verbs_openlp_train.tsv", 888),
+    ("verbs_openlp_train.tsv", 1542),
+    ("verbs_openlp_train.tsv", 2975),
+    ("verbs_openlp_train.tsv", 5579),
+    ("verbs_openlp_train.tsv", 4745),
+    ("verbs_openlp_train.tsv", 4136),
+    ("verbs_openlp_train.tsv", 4965),
+    ("verbs_openlp_train.tsv", 5290),
+    ("verbs_openlp_train.tsv", 1241),
+    ("verbs_openlp_train.tsv", 923),
+    ("verbs_openlp_train.tsv", 2577),
+    ("verbs_openlp_train.tsv", 1536),
+    ("verbs_openlp_train.tsv", 1107),
+    ("verbs_openlp_train.tsv", 5281),
+    ("verbs_openlp_train.tsv", 3067),
+    ("verbs_openlp_train.tsv", 3874),
+    ("verbs_openlp_train.tsv", 4116),
+    ("verbs_openlp_train.tsv", 1184),
+    ("verbs_openlp_train.tsv", 4580),
+    ("verbs_openlp_train.tsv", 5195),
+    ("verbs_openlp_train.tsv", 2871),
+    ("verbs_openlp_train.tsv", 3923),
+    ("verbs_openlp_train.tsv", 4563),
+    ("verbs_openlp_train.tsv", 1363),
+    ("verbs_openlp_train.tsv", 5486),
+    ("verbs_openlp_train.tsv", 5670),
+    ("verbs_openlp_train.tsv", 1591),
+    ("verbs_openlp_train.tsv", 1604),
+    ("verbs_openlp_train.tsv", 650),
+    ("verbs_openlp_train.tsv", 4832),
+    ("verbs_openlp_train.tsv", 1814),
+    ("verbs_openlp_train.tsv", 2954),
+    ("verbs_openlp_train.tsv", 3392),
+    ("verbs_openlp_train.tsv", 4089),
+    ("verbs_openlp_train.tsv", 1224),
+    ("verbs_openlp_train.tsv", 1932),
+    ("verbs_openlp_train.tsv", 1429),
+    ("verbs_openlp_train.tsv", 3190),
+    ("verbs_openlp_train.tsv", 4757),
+    ("verbs_openlp_train.tsv", 5207),
+    ("verbs_openlp_train.tsv", 2054),
+    ("verbs_openlp_train.tsv", 858),
+    ("verbs_openlp_train.tsv", 1052),
+    ("verbs_openlp_train.tsv", 2934),
+    ("verbs_openlp_train.tsv", 4804),
+    ("verbs_openlp_train.tsv", 1369),
+    ("verbs_openlp_train.tsv", 693),
+    ("verbs_openlp_train.tsv", 3054),
+    ("verbs_openlp_train.tsv", 5427),
+    ("verbs_openlp_train.tsv", 4644),
+    ("verbs_openlp_train.tsv", 1363),
+    ("verbs_openlp_train.tsv", 3005),
+    ("verbs_openlp_train.tsv", 1817),
+    ("verbs_openlp_train.tsv", 3460),
+    ("verbs_openlp_train.tsv", 1787),
+    ("verbs_openlp_train.tsv", 5722),
+    ("verbs_openlp_train.tsv", 1320),
+    ("verbs_openlp_train.tsv", 1907),
+    ("verbs_openlp_train.tsv", 2323),
+    ("verbs_openlp_train.tsv", 3772),
+    ("verbs_openlp_train.tsv", 3470),
+    ("verbs_openlp_train.tsv", 3572),
+    ("verbs_openlp_train.tsv", 2909),
+    ("verbs_openlp_train.tsv", 781),
+    ("verbs_openlp_train.tsv", 2969),
+    ("verbs_openlp_train.tsv", 3636),
+    ("verbs_openlp_train.tsv", 3081),
+    ("verbs_openlp_train.tsv", 1369),
+    ("verbs_openlp_train.tsv", 3872),
+    ("verbs_openlp_train.tsv", 5234),
+    ("verbs_openlp_train.tsv", 2652),
+    ("verbs_openlp_train.tsv", 2479),
+    ("verbs_openlp_train.tsv", 2047),
+    ("verbs_openlp_train.tsv", 2989),
+    ("verbs_openlp_train.tsv", 3799),
+    ("verbs_openlp_train.tsv", 4578),
+    ("verbs_openlp_train.tsv", 5115),
+    ("verbs_openlp_train.tsv", 5121),
+    ("verbs_openlp_train.tsv", 5190),
+    ("verbs_openlp_train.tsv", 5410),
+    ("verbs_openlp_train.tsv", 3848),
+    ("verbs_openlp_train.tsv", 3079),
+    ("verbs_openlp_train.tsv", 3007),
+    ("verbs_openlp_train.tsv", 3948),
+    ("verbs_openlp_train.tsv", 662),
+    ("verbs_openlp_train.tsv", 4912),
+    ("verbs_openlp_train.tsv", 4426),
+    ("verbs_openlp_train.tsv", 1178),
+    ("verbs_openlp_train.tsv", 3868),
+    ("verbs_openlp_train.tsv", 4953),
+    ("verbs_openlp_train.tsv", 5152),
+    ("verbs_openlp_train.tsv", 5298),
+    ("verbs_openlp_train.tsv", 1955),
+    ("verbs_openlp_train.tsv", 3523),
+    ("verbs_openlp_train.tsv", 5038),
+    ("verbs_openlp_train.tsv", 4953),
+    ("verbs_openlp_train.tsv", 3848),
+    ("verbs_openlp_train.tsv", 4809),
+    ("verbs_openlp_train.tsv", 1337),
+    ("verbs_openlp_train.tsv", 5198),
+    ("verbs_openlp_train.tsv", 686),
+    ("verbs_openlp_train.tsv", 2303),
+    ("verbs_openlp_train.tsv", 2739),
+    ("verbs_openlp_train.tsv", 570),
+    ("verbs_openlp_train.tsv", 3976),
+    ("verbs_openlp_train.tsv", 2913),
+    ("verbs_openlp_train.tsv", 4183),
+    ("verbs_openlp_train.tsv", 2566),
+    ("verbs_openlp_train.tsv", 4035),
+    ("verbs_openlp_train.tsv", 1697),
+    ("verbs_openlp_train.tsv", 5021),
+    ("verbs_openlp_train.tsv", 4651),
+    ("verbs_openlp_train.tsv", 4864),
+    ("verbs_openlp_train.tsv", 5104),
+    ("verbs_openlp_train.tsv", 689),
+    ("verbs_openlp_train.tsv", 2653),
+    ("verbs_openlp_train.tsv", 1924),
+    ("verbs_openlp_train.tsv", 3986),
+    ("verbs_openlp_train.tsv", 5085),
+    ("verbs_openlp_train.tsv", 4857),
+    ("verbs_openlp_train.tsv", 2521),
+    ("verbs_openlp_train.tsv", 5399),
+    ("verbs_openlp_train.tsv", 4732),
+    ("verbs_openlp_train.tsv", 5676),
+    ("verbs_openlp_train.tsv", 1953),
+    ("verbs_openlp_train.tsv", 697),
+    ("verbs_openlp_train.tsv", 1444),
+    ("verbs_openlp_train.tsv", 4068),
+    ("verbs_openlp_train.tsv", 3216),
+    ("verbs_openlp_train.tsv", 3354),
+    ("verbs_openlp_train.tsv", 3560),
+    ("verbs_openlp_train.tsv", 5410),
+    ("verbs_openlp_train.tsv", 4904),
+    ("verbs_openlp_train.tsv", 1330),
+    ("verbs_openlp_train.tsv", 2631),
+    ("verbs_openlp_train.tsv", 3193),
+    ("verbs_openlp_train.tsv", 2658),
+    ("verbs_openlp_train.tsv", 2003),
+    ("verbs_openlp_train.tsv", 4120),
+    ("verbs_openlp_train.tsv", 4924),
+    ("verbs_openlp_train.tsv", 2411),
+    ("verbs_openlp_train.tsv", 3164),
+    ("verbs_openlp_train.tsv", 1052),
+    ("verbs_openlp_train.tsv", 5324),
+    ("verbs_openlp_train.tsv", 4178),
+    ("verbs_openlp_train.tsv", 3728),
+    ("verbs_openlp_train.tsv", 2798),
+    ("verbs_openlp_train.tsv", 3812),
+    ("verbs_openlp_train.tsv", 799),
+    ("verbs_openlp_train.tsv", 1572),
+    ("verbs_openlp_train.tsv", 3271),
+    ("verbs_openlp_train.tsv", 2165),
+    ("verbs_openlp_train.tsv", 1230),
+    ("verbs_openlp_train.tsv", 561),
+    ("verbs_openlp_train.tsv", 2291),
+    ("verbs_openlp_train.tsv", 5720),
+    ("verbs_openlp_train.tsv", 2973),
+    ("verbs_openlp_train.tsv", 3838),
+    ("verbs_openlp_train.tsv", 5021),
+]
+
+
 def preload():
-    d = {}
+    d = defaultdict(dict)
     files = [
         'rootem-data/verbs_openlp_dev.tsv',
         'rootem-data/verbs_openlp_test.tsv',
@@ -34,13 +413,17 @@ def preload():
         # 'rootem-data/verbs_govil.tsv'
         # 'rootem-data/verbs_govil.tsv'
     ]
+    with open('rootem-data/requests.tsv', encoding='utf-8') as f:
+        requests = f.read()
+    # seen = set(re.findall(R'# sent_id = ([0-9.]+)', requests))
     for file in files:
         with open(file, encoding='utf-8') as f:
             sentences = f.read().split('# sent_id = ')[1:]
             for s in sentences:
                 sent_id, text, *lines = s.strip().split('\n')
                 corpus = file.split('/')[-1]
-                d[(corpus, sent_id)] = (text[8:], [line.split('\t') for line in lines])
+                if (corpus, int(sent_id)) in revisit:
+                    d[corpus][sent_id] = (text[8:], [line.split('\t') for line in lines])
     return d
 
 
@@ -51,15 +434,17 @@ global_dict = preload()
 def upload():
     # TODO: validation
     (_, corpus), (_, sent_id), *items, (_, email) = request.form.items()
-    sentence = list(sorted(items, key=lambda x: int(x[0].split('_')[0])))
-    with open('rootem-data/requests.tsv', 'a', encoding='utf-8') as f:
-        print("# email =", email, file=f)
-        print("# corpus =", corpus, file=f)
-        print("# sent_id =", sent_id, file=f)
-        for i in range(0, len(sentence), 5):
-            (id, _), (_, word), (_, pos), (_, binyan), (_, root) = sentence[i:i+5]
-            print(id, word, pos or '_', binyan or '_', root or '_', sep='\t', file=f)
-        print(file=f)
+    if sent_id in global_dict[corpus]:
+        del global_dict[corpus][sent_id]
+        sentence = list(sorted(items, key=lambda x: int(x[0].split('_')[0])))
+        with open('rootem-data/requests.tsv', 'a', encoding='utf-8') as f:
+            print("# email =", email, file=f)
+            print("# corpus =", corpus, file=f)
+            print("# sent_id =", sent_id, file=f)
+            for i in range(0, len(sentence), 5):
+                (id, _), (_, word), (_, pos), (_, binyan), (_, root) = sentence[i:i+5]
+                print(id, word, pos or '_', binyan or '_', root or '_', sep='\t', file=f)
+            print(file=f)
     resp = make_response(redirect('/'))
     resp.set_cookie('email', email)
     return resp
@@ -68,14 +453,16 @@ def upload():
 @app.route('/', methods=['GET'])
 def random_sentence():
     email = request.cookies.get('email', 'nobody@nowhere.com')
-    (corpus, sent_id), (text, lines) = random.choice(list(global_dict.items()))
+    corpus = random.choice(list(global_dict))
+    sent_id = random.choice(list(global_dict[corpus]))
+    (text, lines) = global_dict[corpus][sent_id]
     return render_template('index.html', corpus=corpus, sent_id=sent_id, text=text, lines=lines, email=email)
 
 
 @app.route('/<corpus>/<sent_id>')
 def specific_sentence(corpus, sent_id):
     email = request.cookies.get('email', 'nobody@nowhere.com')
-    text, lines = global_dict[(corpus, sent_id)]
+    text, lines = global_dict[corpus][sent_id]
     return render_template('index.html', corpus=corpus, sent_id=sent_id, text=text, lines=lines, email=email)
 
 

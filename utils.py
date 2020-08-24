@@ -1,22 +1,30 @@
 import numpy as np
+import torch
 
 
-def pad_sequences(sequences, maxlen, dtype, value) -> np.ndarray:
-    # based on keras' pad_sequences()
-    num_samples = len(sequences)
+def pad(xs, maxlen, val):
+    if len(xs) < maxlen:
+        xs.extend([val] * (maxlen - len(xs)))
+    return xs[:maxlen]
 
-    # take the sample shape from the first non empty sequence
-    # checking for consistency in the main loop below.
-    sample_shape = tuple()
-    for s in sequences:
-        if len(s) > 0:
-            sample_shape = np.asarray(s).shape[1:]
-            break
 
-    x = np.full((num_samples, maxlen) + sample_shape, value, dtype=dtype)
-    for idx, s in enumerate(sequences):
-        if not len(s):
-            continue  # empty list/array was found
-        trunc = s[:maxlen]
-        x[idx, :len(trunc)] = np.asarray(trunc, dtype=dtype)
-    return x
+def encode_word(w, word_maxlen):
+    return pad([ord(c) for c in w], word_maxlen, 0)
+
+
+def first(iterable):
+    return next(iter(iterable))
+
+
+def assert_reasonable_initial(losses, criterion):
+    if isinstance(criterion, torch.nn.CrossEntropyLoss):
+        for k in losses:
+            expected_ce_losses = -np.log(1 / class_size(k))
+            assert abs(1 - losses[k] / expected_ce_losses) < 0.2
+
+
+def shuffle_in_unison(arrs):
+    rng_state = np.random.get_state()
+    for arr in arrs:
+        np.random.set_state(rng_state)
+        np.random.shuffle(arr)

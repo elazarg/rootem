@@ -3,3 +3,6 @@ numpy
 jupyter
 wandb
 torch
+seaborn
+scikit-learn
+more_itertools

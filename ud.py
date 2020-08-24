@@ -1,5 +1,12 @@
-from typing import List, Tuple
-from typing import NamedTuple
+import string
+from functools import lru_cache
+from typing import NamedTuple, List, Tuple, Iterator, Literal
+from collections import Counter
+import sys
+
+import numpy as np
+
+import utils
 
 
 class Conllu(NamedTuple):
@@ -13,21 +20,123 @@ class Conllu(NamedTuple):
     deprel: str = '_'
     deps: str = '_'
     misc: str = '_'
-    lemma_academy: str = '_'
-    standard: str = '_'
+    lemma_academy: str = '_'  # unused
+    standard: str = '_'  # unused in openlp
 
-    def __str__(self):
+    def __repr__(self):
         return ', '.join(f'{k}={v}' for k, v in self._asdict().items() if v != '_')
 
+    def __str__(self):
+        return '\t'.join([
+            self.id or '_',
+            self.form or '_',
+            self.lemma or '_',
+            self.upos or '_',
+            self.xpos or '_',
+            '|'.join(f'{k}={v}' for k, v in sorted(self.feats.items())) or '_',
+            self.head or '_',
+            self.deprel or '_',
+            self.deps or '_',
+            self.misc or '_'
+        ])
 
-def parse_govil(token):
-    return Conllu(*token[:6],
-                  lemma_academy=token[6],
-                  standard=token[7])
+
+class Sentence(NamedTuple):
+    sent_id: str
+    text: str
+    tokens: Tuple[Conllu, ...]
+
+    def __str__(self):
+        return '\n'.join([
+            f'# sent_id = {self.sent_id}',
+            f'# text = {self.text}',
+            *[str(x) for x in self.tokens]
+        ])
 
 
-def parse_opnlp(token):
-    return Conllu(*token)
+class Token(NamedTuple):
+    id: str = '_'
+    form: str = '_'
+    lemma: str = '_'
+
+    Abbr: Literal['_', 'No', 'Yes'] = '_'
+    Case: Literal['_', 'Acc', 'Gen', 'Tem'] = '_'
+    Cconj: Literal['_', 'False', 'True'] = '_'
+    Det: Literal['_', 'False', 'True'] = '_'
+    Definite: Literal['_', 'Cons', 'Def'] = '_'
+    # FullPrefix: Literal['_', 'בב', 'ב', 'בכ', 'בל', 'ה', 'כ', 'כב', 'כש', 'כשב', 'כשל', 'ל', 'לכ', 'מ', 'מב', 'מש', 'עד', 'על', 'ש', 'שב', 'שכ', 'של', 'שמ'] = '_'
+    Gender: Literal['_', 'Fem', 'Fem,Masc', 'Masc'] = '_'
+    HebExistential: Literal['_', 'No', 'True'] = '_'
+    HebSource: Literal['_', 'ConvUncertainHead', 'ConvUncertainLabel'] = '_'
+    HebBinyan: Literal['_', 'PAAL', 'NIFAL', 'PIEL', 'PUAL', 'HIFIL', 'HUFAL', 'HITPAEL'] = '_'
+    Mood: Literal['_', 'No', 'Imp'] = '_'
+    Number: Literal['_', 'Dual', 'Dual,Plur', 'Plur', 'Plur,Sing', 'Sing'] = '_'
+    Person: Literal['_', '1', '1,2,3', '2', '3'] = '_'
+    Polarity: Literal['_', 'Neg', 'Pos'] = '_'
+    Pos: Literal['_', 'ADJ', 'ADP', 'ADV', 'AUX', 'CCONJ', 'DET', 'INTJ', 'NOUN', 'NUM', 'PRON', 'PROPN', 'PUNCT', 'SCONJ', 'VERB', 'X'] = '_'
+    Prefix: Literal['_', 'No', 'Yes'] = '_'
+    PronGender: Literal['_', 'Fem', 'Fem,Masc', 'Masc'] = '_'
+    PronNumber: Literal['_', 'Plur', 'Plur,Sing', 'Sing'] = '_'
+    PronPerson: Literal['_', '1', '2', '3'] = '_'
+    PronType: Literal['_', 'Art', 'Dem', 'Emp', 'Ind', 'Int', 'Prs'] = '_'
+    Reflex: Literal['_', 'No', 'Yes'] = '_'
+    R1: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
+    R2: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
+    R3: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
+    R4: Literal['_', '.', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת', "ג'", "ז'", "צ'", "שׂ"] = '_'
+    Tense: Literal['_', 'Present', 'Fut', 'Past'] = '_'
+    VerbForm: Literal['_', 'Inf', 'Part'] = '_'
+    VerbType: Literal['_', 'Cop', 'Mod'] = '_'
+    Voice: Literal['_', 'Act', 'Mid', 'Pass'] = '_'
+    Xtra: Literal['_', 'No', 'Junk'] = '_'
+
+    def __str__(self):
+        return '\t'.join([
+            self.id or '_',
+            self.form or '_',
+            self.lemma,
+            *self[3:]
+        ])
+
+    @classmethod
+    @lru_cache()
+    def classes(cls, label):
+        return cls.__annotations__[label].__args__
+
+    def encode_label(self, label):
+        try:
+            return type(self).classes(label).index(self._asdict()[label])
+        except ValueError:
+            raise ValueError(f'{repr(self._asdict()[label])} not in {label}')
+
+    def encode_labels(self):
+        return [self.encode_label(label) for label in self.labels()]
+
+    @classmethod
+    @lru_cache()
+    def labels(cls):
+        return [label for label, kind in cls.__annotations__.items()
+                if kind != str]
+
+    @classmethod
+    @lru_cache()
+    def label_map(cls):
+        return {label: cls.class_size(label) for label in cls.labels()}
+
+    @classmethod
+    @lru_cache()
+    def zero_labels(cls):
+        return [0 for kind in cls.__annotations__.values() if kind != str]
+
+    @classmethod
+    @lru_cache()
+    def decode_label(cls, label, idx):
+        return cls.classes(label)[idx]
+
+    @classmethod
+    @lru_cache()
+    def class_size(cls, label):
+        return len(cls.classes(label))
 
 
 def expand_feats(token):
@@ -37,16 +146,18 @@ def expand_feats(token):
         token[5] = dict(feat.split('=')
                         for feat in token[5].split('|')
                         if feat)
+    else:
+        token[5] = {}
     return token
 
 
-def parse_conll_sentence(sentence: str, parser):
+def parse_conll_sentence(sentence: str, parser) -> Sentence:
     sentence = sentence.strip()
     sent_id, text, *tokens = sentence.split('\n')
     sent_id = sent_id.split()[-1]
     text = text.split(maxsplit=3)[-1]
     tokens = [parser(expand_feats(token.split('\t'))) for token in tokens]
-    return sent_id, text, tokens
+    return Sentence(sent_id, text, tuple(tokens))
 
 
 def next_after(id):
@@ -56,7 +167,7 @@ def next_after(id):
         return int(id) + 1
 
 
-def group_tokens(tokens: List[Conllu]):
+def group_tokens(tokens: Tuple[Conllu, ...]):
     res = []
     i = 0
     while i < len(tokens):
@@ -71,18 +182,6 @@ def group_tokens(tokens: List[Conllu]):
         res.append((token, subtokens))
         i += 1
     return res
-
-
-class Token(NamedTuple):
-    id: str
-    form: str
-    det: bool
-    adp: List[str]  # ל, מ, ב, כ
-    cconj: bool
-    sconj: List[dict]
-    xpos: str
-    feats: dict
-    pron: dict
 
 
 def merge_consecutive(tokens: List[Tuple[Conllu, List[Conllu]]]):
@@ -105,34 +204,60 @@ def merge_consecutive(tokens: List[Tuple[Conllu, List[Conllu]]]):
         collect = []
 
 
-def merge(id, t: Conllu, subs: List[Conllu]):
+def merge(id: str, t: Conllu, subs: List[Conllu]):
+    det: Literal['_', 'False', 'True'] = 'False'
+    cconj: Literal['_', 'False', 'True'] = 'False'
+    # full_prefix = '_'
+    xpos = t.xpos
+    feats = t.feats
+    pron = {}
+    lemma = t.form.strip(string.punctuation)
     if subs:
-        det = any(s.xpos == 'DET' for s in subs)
-        cconj = any(s.xpos == 'CCONJ' for s in subs)
-        sconj = [s.feats for s in subs if s.xpos == 'SCONJ'] or [{}]
+        if any(s.xpos == 'DET' for s in subs):
+            det = 'True'
+        if any(s.xpos == 'CCONJ' for s in subs):
+            cconj = 'True'
         [pron] = [s.feats for s in subs if s.xpos == 'PRON'] or [{}]
-        [main] = [s for s in subs if s.xpos in ['NOUN', 'VERB', 'ADJ', 'PROPN']] or [None]
-        adp = [s.lemma for s in subs if s.xpos == 'ADP']
-        xpos = main.xpos if main else None
-        feats = main.feats if main else '_'
-    else:
-        det = False
-        adp = []
-        cconj = False
-        sconj = []
-        xpos = t.xpos
-        feats = t.feats
-        pron = {}
+        m = {s.xpos: i for (i, s) in enumerate(subs)}
+        main = None
+        if any('case:gen' in s.deprel for s in subs):
+            feats['Case'] = 'Gen'
+        if any('case:acc' in s.deprel for s in subs):
+            feats['Case'] = 'Acc'
+
+        for pos in ['VERB', 'NOUN', 'AUX', 'PROPN', 'ADJ', 'ADV', 'ADP', 'PRON', 'INTJ', 'NUM', 'X', 'CCONJ', 'SCONJ', 'DET', 'PUNCT']:
+            k = m.get(pos)
+            if k:
+                main = subs[k]
+                break
+        if k:
+            lemma = main.lemma.strip(string.punctuation)
+            # print([s.deprel for s in subs if s.deprel])
+            # full_prefix = ''.join(s.form if len(s.form) < 4 else s.lemma if len(s.lemma) < 4 else '' for s in subs[:k] if s.xpos == 'ADP' and s.deprel == 'case')
+        xpos = main.xpos if main else '_'
+        feats = main.feats if main else {}
+    if 'Root' in feats:
+        feats['R1'], feats['R2'], *r3, feats['R4'] = feats['Root'].split('.')
+        feats['R3'] = r3[0] if r3 else '.'
+        del feats['Root']
+    if xpos == 'Verb':
+        if feats.get('Tense', '_') == '_':
+            feats['Tense'] = 'Present'
+    for feat in ['HebExistential', 'Mood', 'Prefix', 'Reflex', 'Abbr', 'Xtra']:
+        if feats.get(feat, '_') == '_':
+            feats[feat] = 'No'
     return Token(
         id=id,
         form=t.form,
-        det=det,
-        adp=adp,
-        cconj=cconj,
-        sconj=sconj,
-        xpos=xpos,
-        feats=feats if feats != '_' else {},
-        pron=pron
+        lemma=lemma,
+        # FullPrefix=full_prefix or '_',
+        Pos=xpos,
+        Cconj=cconj,
+        Det=det,
+        **feats,
+        PronGender=pron.get('Gender', '_'),
+        PronNumber=pron.get('Number', '_'),
+        PronPerson=pron.get('Person', '_'),
     )
 
 
@@ -143,36 +268,165 @@ def print_groups(tokens):
             print(t)
             for sub in subs:
                 print(sub)
-            print(merge(id, t, subs))
+            print(merge(str(id), t, subs))
             print()
 
 
-def parse_file(filename, parser):
+def parse_conll_file(filename, parser) -> Iterator[Sentence]:
     with open(filename, encoding='utf-8') as f:
         data = f.read().split('# sent_id')[1:]
     for block in data:
-        sentence_id, text, sentence = parse_conll_sentence(block, parser)
-        tokens = merge_consecutive(group_tokens(sentence))
-        yield sentence_id, text, [merge(id, t, subs) for id, (t, subs) in enumerate(tokens)]
+        yield parse_conll_sentence(block, parser)
 
 
-if __name__ == '__main__':
+def parse_file_merge(filename, parser):
+    for sentence in parse_conll_file(filename, parser):
+        tokens = merge_consecutive(group_tokens(sentence.tokens))
+        words = [merge(str(id), t, subs) for id, (t, subs) in enumerate(tokens)]
+        yield (sentence.sent_id, sentence.text, words)
+
+
+def load_dataset(filename, parser, sentence_maxlen, word_maxlen):
+    sentence_labels = []
+    sentences = []
+    for sentence in parse_conll_file(filename, parser):
+        tokens = list(merge_consecutive(group_tokens(sentence.tokens)))
+
+        sentence = [utils.encode_word(t.form, word_maxlen)
+                    for (t, subs) in tokens]
+        sentences.append(utils.pad(sentence, sentence_maxlen, utils.encode_word('', word_maxlen)))
+
+        labels = [merge(str(id), t, subs).encode_labels()
+                  for id, (t, subs) in enumerate(tokens)]
+
+        sentence_labels.append(utils.pad(labels, sentence_maxlen, Token.zero_labels()))
+    return np.array(sentences), np.array(sentence_labels).transpose([2, 0, 1])
+
+
+def parse_govil(token):
+    return Conllu(*token[:6],
+                  lemma_academy=token[6],
+                  standard=token[7])
+
+
+def parse_opnlp(token):
+    return Conllu(*token)
+
+
+def generate_verbsets():
     files = [
-        ('mini_openlp.txt', parse_opnlp),
-        ('mini_govil.txt', parse_govil),
-        ('rootem-data/govil.txt', parse_govil, 'rootem-data/verbs_govil.tsv'),
+        # ('mini_openlp.txt', parse_opnlp),
+        # ('mini_govil.txt', parse_govil),
+        # ('rootem-data/govil.txt', parse_govil, 'rootem-data/verbs_govil.tsv'),
         ('../Hebrew_UD/he_htb-ud-dev.conllu', parse_opnlp, 'rootem-data/verbs_openlp_dev.tsv'),
         ('../Hebrew_UD/he_htb-ud-test.conllu', parse_opnlp, 'rootem-data/verbs_openlp_test.tsv'),
         ('../Hebrew_UD/he_htb-ud-train.conllu', parse_opnlp, 'rootem-data/verbs_openlp_train.tsv'),
     ]
 
-    for infilename, parser, outfilename in files[4:]:
+    for infilename, parser, outfilename in files:
         with open(outfilename, 'w', encoding='utf-8') as outfile:
-            for sentence_id, text, sentence in parse_file(infilename, parser):
+            for sentence_id, text, sentence in parse_file_merge(infilename, parser):
                 print('# sent_id =', sentence_id, file=outfile)
                 print('# text =', text, file=outfile)
                 for token in sentence:
-                    binyan = token.feats.get('HebBinyan', '_')
-                    verb = token.xpos if binyan != '_' else '_'
-                    print(token.id, token.form, verb, binyan, sep='\t', file=outfile)
+                    verb = token.Pos if token.Pos in ['VERB'] else '_'
+                    print(token.id, token.form, verb, token.HebBinyan, sep='\t', file=outfile)
                 print(file=outfile)
+
+
+openlp_files = [
+    '../Hebrew_UD/he_htb-ud-dev.conllu',
+    '../Hebrew_UD/he_htb-ud-train.conllu',
+    '../Hebrew_UD/he_htb-ud-test.conllu'
+]
+
+
+def print_token_prefixes():
+    outfile = sys.stdout
+    stats = Counter()
+
+    for filename in openlp_files:
+        for sentence_id, text, sentence in parse_file_merge(filename, parse_opnlp):
+            # print('# sent_id =', sentence_id, file=outfile)
+            # print('# text =', text, file=outfile)
+            for token in sentence:
+                # print(token, file=outfile)
+                if token.HebBinyan != '_':
+                    if token.adp_sconj or token.Cconj:
+                        p = ('ו' if token.Cconj else '') + ''.join(token.adp_sconj)
+                        print(p, token.form, sep='\t', file=outfile)
+                        stats[p] += 1
+                    else:
+                        stats[''] += 1
+            # print(file=outfile)
+    for k, v in sorted(stats.items(), key=lambda kv: kv[1]):
+        print(k, v)  #, v/total)
+
+
+def count():
+    total = 0
+    for filename in openlp_files:
+        n = sum(1 for _ in parse_file_merge(filename, parse_opnlp))
+        print(filename, n)
+        total += n
+
+    n = sum(1 for _ in parse_file_merge('rootem-data/govil.txt', parse_govil))
+    print('govil', n)
+    total += n
+
+    print('total', total)
+
+
+def extract_noncontext():
+    translate = {
+        'Sing': 'יחיד',
+        'Plur': 'רבים',
+        'Dual,Plur': 'זוג,רבים',
+        'Plur,Sing': 'הכל',
+        'Dual': 'זוג',
+        'Masc': 'זכר',
+        'Fem': 'נקבה',
+        'Fem,Masc': 'סתמי',
+        'Past': 'עבר',
+        'Fut': 'עתיד',
+        'PAAL': 'פעל',
+        'NIFAL': 'נפעל',
+        'PIEL': 'פיעל',
+        'PUAL': 'פועל',
+        'HIFIL': 'הפעיל',
+        'HUFAL': 'הופעל',
+        'HITPAEL': 'התפעל',
+        '1': 'ראשון',
+        '2': 'שני',
+        '3': 'שלישי',
+        '1,2,3': 'הכל',
+    }
+    for part in ['dev', 'test', 'train']:
+        with open(f'ud/nocontext-{part}.tsv', 'w', encoding='utf8') as f:
+            for id, text, words in parse_file_merge(f'../Hebrew_UD/he_htb-ud-{part}.conllu', parse_opnlp):
+                for w in words:
+                    if w.HebBinyan != '_' and w.R1 != '_':
+                        number = translate.get(w.Number)
+                        gender = translate.get(w.Gender)
+                        person = translate.get(w.Person)
+                        tense = translate.get(w.Tense) if w.Tense else 'הווה'
+                        binyan = translate.get(w.HebBinyan)
+                        print(binyan, tense, person, gender, number, w.R1, w.R2, w.R3, w.R4, w.form, sep='\t', file=f)
+
+
+def extract_withcontext():
+    # prefix = set()
+    for part in ['dev', 'test', 'train']:
+        with open(f'ud/contextual-{part}.tsv', 'w', encoding='utf8') as f:
+            for id, text, words in parse_file_merge(f'../Hebrew_UD/he_htb-ud-{part}.conllu', parse_opnlp):
+                print('sent_id:', id, file=f)
+                print('text:', text, file=f)
+                for w in words:
+                    print(w.encode_labels())
+                    print(w, file=f)
+                print(file=f)
+    # print(f'Literal[{", ".join(prefix)}]')
+
+
+if __name__ == '__main__':
+    extract_withcontext()

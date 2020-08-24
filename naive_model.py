@@ -1,7 +1,7 @@
 from collections import defaultdict
-from concrete import iter_items
+from verbs import iter_items
 from collections import Counter
-from encoding import NAMES, FEATURES, wordlist2numpy, numpy2word, list_from_category, numpy2wordlist, from_category
+from encoding import NAMES, CLASSES, numpy2word, numpy2wordlist, from_category
 import numpy as np
 import torch
 
@@ -51,9 +51,9 @@ class NaiveModel:
         transposed = self.transpose_and_merge([self[w] for w in words])
         res = {}
         for k in NAMES:
-            res[k] = np.zeros((inputs.shape[0], len(FEATURES[k])))
+            res[k] = np.zeros((inputs.shape[0], len(CLASSES[k])))
             for w, t in enumerate(transposed):
-                indices = [FEATURES[k].index(v) for v in t[k]]
+                indices = [CLASSES[k].index(v) for v in t[k]]
                 n = len(indices)
                 for i in indices:
                     res[k][w][i] += 1 / n
@@ -88,4 +88,14 @@ def print_stats(filename):
     w = Counter(len(v) for v in model.values())
     for k, v in w.items():
         print(f'{k}\t{v}')
-    print(model['נאחז'])
+    for k in model:
+        if len(model[k]) > 30:
+            print(k, len(model[k]))
+            # print(k, len(model[k]))
+            # for v in model[k]:
+            #     print(', '.join(v.values()))
+            # print()
+
+
+if __name__ == '__main__':
+    print_stats('synthetic/all_combined.tsv')
