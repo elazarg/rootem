@@ -33,9 +33,18 @@ class Verb(NamedTuple):
             raise ValueError(f'{repr(self._asdict()[label])} not in {label}')
 
     def encode_labels(self):
-        return [self.encode_label(label)
-                for label, vocab in self.__annotations__.items()
-                if vocab != str]
+        return [self.encode_label(label) for label in self.labels()]
+
+    @classmethod
+    @lru_cache()
+    def labels(cls):
+        return [label for label, kind in cls.__annotations__.items()
+                if kind != str]
+
+    @classmethod
+    @lru_cache()
+    def label_map(cls):
+        return {label: cls.class_size(label) for label in cls.labels()}
 
     @classmethod
     @lru_cache()

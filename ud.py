@@ -1,4 +1,5 @@
 import string
+from functools import lru_cache
 from typing import NamedTuple, List, Tuple, Iterator, Literal
 from collections import Counter
 import sys
@@ -98,6 +99,7 @@ class Token(NamedTuple):
         ])
 
     @classmethod
+    @lru_cache()
     def classes(cls, label):
         return cls.__annotations__[label].__args__
 
@@ -107,29 +109,34 @@ class Token(NamedTuple):
         except ValueError:
             raise ValueError(f'{repr(self._asdict()[label])} not in {label}')
 
-    @classmethod
-    def labels(cls):
-        return [label for label, kind in cls.__annotations__.items()
-                if kind != str]
-
     def encode_labels(self):
         return [self.encode_label(label) for label in self.labels()]
 
     @classmethod
+    @lru_cache()
+    def labels(cls):
+        return [label for label, kind in cls.__annotations__.items()
+                if kind != str]
+
+    @classmethod
+    @lru_cache()
+    def label_map(cls):
+        return {label: cls.class_size(label) for label in cls.labels()}
+
+    @classmethod
+    @lru_cache()
     def zero_labels(cls):
         return [0 for kind in cls.__annotations__.values() if kind != str]
 
     @classmethod
+    @lru_cache()
     def decode_label(cls, label, idx):
         return cls.classes(label)[idx]
 
     @classmethod
+    @lru_cache()
     def class_size(cls, label):
         return len(cls.classes(label))
-
-    @classmethod
-    def label_map(cls):
-        return {label: cls.class_size(label) for label in cls.labels()}
 
 
 def expand_feats(token):
