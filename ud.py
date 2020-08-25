@@ -67,7 +67,7 @@ class Token(NamedTuple):
     # FullPrefix: Literal['_', 'בב', 'ב', 'בכ', 'בל', 'ה', 'כ', 'כב', 'כש', 'כשב', 'כשל', 'ל', 'לכ', 'מ', 'מב', 'מש', 'עד', 'על', 'ש', 'שב', 'שכ', 'של', 'שמ'] = '_'
     Gender: Literal['_', 'Fem', 'Fem,Masc', 'Masc'] = '_'
     HebExistential: Literal['_', 'No', 'True'] = '_'
-    HebSource: Literal['_', 'ConvUncertainHead', 'ConvUncertainLabel'] = '_'
+    # HebSource: Literal['_', 'ConvUncertainHead', 'ConvUncertainLabel'] = '_'
     HebBinyan: Literal['_', 'PAAL', 'NIFAL', 'PIEL', 'PUAL', 'HIFIL', 'HUFAL', 'HITPAEL'] = '_'
     Mood: Literal['_', 'No', 'Imp'] = '_'
     Number: Literal['_', 'Dual', 'Dual,Plur', 'Plur', 'Plur,Sing', 'Sing'] = '_'
@@ -114,6 +114,11 @@ class Token(NamedTuple):
 
     @classmethod
     @lru_cache()
+    def decode_label(cls, label, idx):
+        return cls.classes(label)[idx]
+
+    @classmethod
+    @lru_cache()
     def labels(cls):
         return [label for label, kind in cls.__annotations__.items()
                 if kind != str]
@@ -127,11 +132,6 @@ class Token(NamedTuple):
     @lru_cache()
     def zero_labels(cls):
         return [0 for kind in cls.__annotations__.values() if kind != str]
-
-    @classmethod
-    @lru_cache()
-    def decode_label(cls, label, idx):
-        return cls.classes(label)[idx]
 
     @classmethod
     @lru_cache()
@@ -246,6 +246,8 @@ def merge(id: str, t: Conllu, subs: List[Conllu]):
     for feat in ['HebExistential', 'Mood', 'Prefix', 'Reflex', 'Abbr', 'Xtra']:
         if feats.get(feat, '_') == '_':
             feats[feat] = 'No'
+    if 'HebSource' in feats:
+        del feats['HebSource']
     return Token(
         id=id,
         form=t.form,

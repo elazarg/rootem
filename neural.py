@@ -56,6 +56,7 @@ class UdModel(pl.LightningModule):
 
         m = {name: (y_hat, y) for (name, y_hat), y in zip(ys_hat.items(), ys)}
 
+        # idea: randomly zero a different subset of losses on each epoch
         loss = sum(F.cross_entropy(y_hat, y, ignore_index=0)
                    for y_hat, y in m.values())
 
@@ -87,7 +88,7 @@ class UdModel(pl.LightningModule):
         return result
 
     def predict(self, sentence):
-        return self(sentence).argmax(1)
+        return {name: v.argmax(1) for name, v in self(sentence.to(self.device)).items()}
 
     def test_step(self, batch, batch_idx):
         loss, accuracy = self.compute_metrics(batch)
