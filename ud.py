@@ -6,6 +6,7 @@ import sys
 
 import numpy as np
 
+import niqqud
 import utils
 
 
@@ -291,12 +292,15 @@ def parse_file_merge(filename, parser):
 def load_dataset(filename, parser, sentence_maxlen, word_maxlen):
     sentence_labels = []
     sentences = []
-    for sentence in parse_conll_file(filename, parser):
+    # dotted_sentences = []
+    for sentence, dotted_sentence in zip(parse_conll_file(filename, parser), niqqud.read_niqqud_for_file(filename)):
         tokens = list(merge_consecutive(group_tokens(sentence.tokens)))
+        assert len(tokens) == len(dotted_sentence)
 
-        sentence = [utils.encode_word(t.form, word_maxlen)
-                    for (t, subs) in tokens]
-        sentences.append(utils.pad(sentence, sentence_maxlen, utils.encode_word('', word_maxlen)))
+        encoded_sentence = [utils.encode_word(dotted, word_maxlen)
+                            for dotted, (t, subs) in zip(dotted_sentence, tokens)]
+
+        sentences.append(utils.pad(encoded_sentence, sentence_maxlen, utils.encode_word('', word_maxlen)))
 
         labels = [merge(str(id), t, subs).encode_labels()
                   for id, (t, subs) in enumerate(tokens)]
