@@ -292,13 +292,12 @@ def parse_file_merge(filename, parser):
 def load_dataset(filename, parser, sentence_maxlen, word_maxlen):
     sentence_labels = []
     sentences = []
-    # dotted_sentences = []
-    for sentence, dotted_sentence in zip(parse_conll_file(filename, parser), niqqud.read_niqqud_for_file(filename)):
+    # dotted_sentences = niqqud.read_niqqud_for_file(filename)
+    for sentence in parse_conll_file(filename, parser):
         tokens = list(merge_consecutive(group_tokens(sentence.tokens)))
-        assert len(tokens) == len(dotted_sentence)
 
-        encoded_sentence = [utils.encode_word(dotted, word_maxlen)
-                            for dotted, (t, subs) in zip(dotted_sentence, tokens)]
+        encoded_sentence = [utils.encode_word(t.form, word_maxlen)
+                            for (t, subs) in tokens]
 
         sentences.append(utils.pad(encoded_sentence, sentence_maxlen, utils.encode_word('', word_maxlen)))
 
@@ -422,17 +421,20 @@ def extract_noncontext():
 
 def extract_withcontext():
     # prefix = set()
+    lengths = Counter()
     for part in ['dev', 'test', 'train']:
         with open(f'ud/contextual-{part}.tsv', 'w', encoding='utf8') as f:
             for id, text, words in parse_file_merge(f'../Hebrew_UD/he_htb-ud-{part}.conllu', parse_opnlp):
                 print('sent_id:', id, file=f)
                 print('text:', text, file=f)
                 for w in words:
-                    print(w.encode_labels())
+                    lengths[len(w.form)] += 1
                     print(w, file=f)
                 print(file=f)
+    print(lengths)
     # print(f'Literal[{", ".join(prefix)}]')
 
 
 if __name__ == '__main__':
     extract_withcontext()
+
